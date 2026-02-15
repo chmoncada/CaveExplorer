@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+
+# Xcode / Playground user-specific data
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+
+# Playground generated files
+timeline.xctimeline
+playground.xcworkspace/
+
+# Swift Package Manager (if used)
+.build/
+.swiftpm/
+Packages/
+
+# Build artifacts
+DerivedData/
