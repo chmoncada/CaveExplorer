@@ -2,13 +2,8 @@ import CaveDomain
 import SwiftUI
 
 public struct ContentView: View {
-	@State private var session = CaveSession(
-		config: CaveConfig(
-			maxDepth: 5,
-			decisionTime: 5.0,
-			happyEndingStartPercent: 0.8
-		)
-	)
+	@State private var settings = CaveGameSettings.default
+	@State private var session = CaveSession(config: CaveGameSettings.default.caveConfig)
 	@State private var torchPulse = 0.0
 
 	private let tunnelBuilder = CaveTunnelFrameBuilder(segmentCount: 11)
@@ -45,8 +40,12 @@ public struct ContentView: View {
 					session.choose(optionIndex: optionIndex)
 				}
 
+				SettingsPanelView(settings: $settings) {
+					session.applySettings(settings)
+				}
+
 				BottomActionBar(isGameOver: session.isGameOver) {
-					session.startNewGame()
+					session.applySettings(settings)
 				}
 			}
 			.padding(22)
@@ -188,6 +187,67 @@ private struct ChoicePanelView: View {
 	}
 }
 
+private struct SettingsPanelView: View {
+	@Binding var settings: CaveGameSettings
+	let onApply: () -> Void
+
+	var body: some View {
+		VStack(alignment: .leading, spacing: 10) {
+			Text("Ajustes de partida")
+				.font(.headline)
+				.foregroundStyle(.white)
+
+			HStack {
+				Text("Profundidad: \(settings.maxDepth)")
+					.foregroundStyle(.white.opacity(0.9))
+
+				Spacer()
+
+				Stepper("Profundidad", value: $settings.maxDepth, in: CaveGameSettings.depthRange)
+					.labelsHidden()
+			}
+
+			VStack(alignment: .leading, spacing: 4) {
+				Text(
+					"Tiempo de decision: \(settings.decisionTime, format: .number.precision(.fractionLength(1)))s"
+				)
+				.foregroundStyle(.white.opacity(0.9))
+
+				Slider(
+					value: $settings.decisionTime,
+					in: CaveGameSettings.decisionTimeRange,
+					step: 0.5
+				)
+			}
+
+			VStack(alignment: .leading, spacing: 4) {
+				Text(
+					"Final feliz desde: \(Int(settings.happyEndingStartPercent * 100), format: .number)%"
+				)
+				.foregroundStyle(.white.opacity(0.9))
+
+				Slider(
+					value: $settings.happyEndingStartPercent,
+					in: CaveGameSettings.happyEndingStartPercentRange,
+					step: 0.05
+				)
+			}
+
+			Button("Aplicar ajustes") {
+				onApply()
+			}
+			.buttonStyle(.borderedProminent)
+		}
+		.frame(maxWidth: 540, alignment: .leading)
+		.padding(12)
+		.background(.black.opacity(0.34), in: .rect(cornerRadius: 14))
+		.overlay {
+			RoundedRectangle(cornerRadius: 14)
+				.stroke(.white.opacity(0.18), lineWidth: 1)
+		}
+	}
+}
+
 private struct BottomActionBar: View {
 	let isGameOver: Bool
 	let onNewMap: () -> Void
@@ -199,7 +259,7 @@ private struct BottomActionBar: View {
 
 			Spacer()
 
-			Button(isGameOver ? "Jugar de nuevo" : "Nuevo mapa") {
+			Button(isGameOver ? "Jugar con ajustes" : "Nuevo mapa") {
 				onNewMap()
 			}
 			.buttonStyle(.borderedProminent)

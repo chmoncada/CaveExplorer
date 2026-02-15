@@ -85,6 +85,45 @@ final class CaveExplorerTests: XCTestCase {
 		}
 	}
 
+	func test_applySettings_updatesSessionConfigForNextRun() {
+		let session = makeSession()
+		session.applySettings(
+			CaveGameSettings(
+				maxDepth: 9,
+				decisionTime: 4.0,
+				happyEndingStartPercent: 0.85
+			)
+		)
+
+		XCTAssertEqual(session.maxDepth, 9)
+
+		session.tick(deltaTime: 2.0)
+
+		guard let travelState = session.runState else {
+			XCTFail("Expected run state")
+			return
+		}
+
+		if case .traveling = travelState.phase {
+			// Expected: travel time uses updated settings.
+		} else {
+			XCTFail("Expected travel to still be active before 4 seconds")
+		}
+
+		session.tick(deltaTime: 2.1)
+
+		guard let updatedState = session.runState else {
+			XCTFail("Expected run state")
+			return
+		}
+
+		if case .waitingForChoice(let decision) = updatedState.phase {
+			XCTAssertEqual(decision.totalTime, 4.0, accuracy: 0.001)
+		} else {
+			XCTFail("Expected decision phase after completing travel")
+		}
+	}
+
 	private func makeSession() -> CaveSession {
 		CaveSession(
 			config: CaveConfig(

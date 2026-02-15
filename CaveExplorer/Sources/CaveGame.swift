@@ -15,7 +15,7 @@ final class CaveSession {
 	}
 
 	private let generator: CaveMapGenerator
-	private let baseConfig: CaveConfig
+	private var baseConfig: CaveConfig
 
 	private var activeConfig: CaveConfig
 	private var runEngine: CaveRunEngine?
@@ -25,7 +25,7 @@ final class CaveSession {
 	private(set) var choices: [Choice] = []
 
 	init(
-		config: CaveConfig = CaveConfig(),
+		config: CaveConfig = CaveGameSettings.default.caveConfig,
 		generator: CaveMapGenerator = CaveMapGenerator()
 	) {
 		self.baseConfig = config
@@ -89,6 +89,12 @@ final class CaveSession {
 	var isGameOver: Bool {
 		guard case .ended = runState?.phase else { return false }
 		return true
+	}
+
+	func applySettings(_ settings: CaveGameSettings) {
+		let config = settings.caveConfig
+		baseConfig = config
+		startNewGame(seed: config.randomSeed)
 	}
 
 	func startNewGame(seed: UInt64? = nil) {
