@@ -36,7 +36,8 @@ struct CaveRunSceneView: View {
 				drawTunnel(into: &context, frame: tunnelFrame)
 				drawDust(into: &context, frame: atmosphereFrame)
 				drawBats(into: &context, frame: atmosphereFrame)
-				drawTorchGlow(into: &context, frame: tunnelFrame, size: size)
+				drawTorchGlow(into: &context, frame: tunnelFrame, size: size, urgency: urgency)
+				drawTorchHand(into: &context, frame: tunnelFrame, elapsed: elapsed, urgency: urgency)
 
 				if decisionChoiceCount > 0 {
 					drawDecisionBeacons(
@@ -54,8 +55,10 @@ struct CaveRunSceneView: View {
 		}
 		.ignoresSafeArea()
 	}
+}
 
-	private func drawBackdrop(into context: inout GraphicsContext, size: CGSize) {
+extension CaveRunSceneView {
+	fileprivate func drawBackdrop(into context: inout GraphicsContext, size: CGSize) {
 		let rect = CGRect(origin: .zero, size: size)
 		context.fill(
 			Path(rect),
@@ -70,7 +73,7 @@ struct CaveRunSceneView: View {
 		)
 	}
 
-	private func drawFog(into context: inout GraphicsContext, frame: CaveAtmosphereFrame) {
+	fileprivate func drawFog(into context: inout GraphicsContext, frame: CaveAtmosphereFrame) {
 		for fogBand in frame.fogBands {
 			let fogPath = Path(roundedRect: fogBand.rect, cornerRadius: fogBand.rect.height * 0.5)
 			context.fill(
@@ -88,7 +91,7 @@ struct CaveRunSceneView: View {
 		}
 	}
 
-	private func drawTunnel(into context: inout GraphicsContext, frame: CaveTunnelFrame) {
+	fileprivate func drawTunnel(into context: inout GraphicsContext, frame: CaveTunnelFrame) {
 		for layer in frame.layers {
 			let outer = layer.outerRect
 			let inner = layer.innerRect
@@ -131,7 +134,7 @@ struct CaveRunSceneView: View {
 		}
 	}
 
-	private func drawDust(into context: inout GraphicsContext, frame: CaveAtmosphereFrame) {
+	fileprivate func drawDust(into context: inout GraphicsContext, frame: CaveAtmosphereFrame) {
 		for particle in frame.dustParticles {
 			let rect = CGRect(
 				x: particle.center.x - particle.radius,
@@ -146,7 +149,7 @@ struct CaveRunSceneView: View {
 		}
 	}
 
-	private func drawBats(into context: inout GraphicsContext, frame: CaveAtmosphereFrame) {
+	fileprivate func drawBats(into context: inout GraphicsContext, frame: CaveAtmosphereFrame) {
 		for bat in frame.bats {
 			let wingSpread = 12 * bat.scale
 			let wingLift = CGFloat(sin(bat.flapPhase)) * (4 * bat.scale)
@@ -163,11 +166,18 @@ struct CaveRunSceneView: View {
 		}
 	}
 
-	private func drawTorchGlow(into context: inout GraphicsContext, frame: CaveTunnelFrame, size: CGSize) {
-		let center = CGPoint(
+	fileprivate func drawTorchGlow(
+		into context: inout GraphicsContext,
+		frame: CaveTunnelFrame,
+		size: CGSize,
+		urgency: Double
+	) {
+		let sceneCenter = CGPoint(
 			x: frame.layers.last?.innerRect.midX ?? (size.width * 0.5),
 			y: frame.layers.last?.innerRect.midY ?? (size.height * 0.55)
 		)
+		let center = mix(sceneCenter, frame.torchAnchor, amount: 0.22)
+		let urgencyBoost = max(0, min(1, urgency))
 
 		let torchRect = CGRect(
 			x: center.x - frame.torchRadius,
@@ -182,8 +192,8 @@ struct CaveRunSceneView: View {
 			Path(ellipseIn: torchRect),
 			with: .radialGradient(
 				Gradient(colors: [
-					Color(red: 0.98, green: 0.64, blue: 0.32).opacity(0.35),
-					Color(red: 0.48, green: 0.24, blue: 0.12).opacity(0.12),
+					Color(red: 0.98, green: 0.64, blue: 0.32).opacity(0.35 + (0.12 * urgencyBoost)),
+					Color(red: 0.48, green: 0.24, blue: 0.12).opacity(0.12 + (0.08 * urgencyBoost)),
 					.clear,
 				]),
 				center: center,
@@ -196,7 +206,7 @@ struct CaveRunSceneView: View {
 		context.fill(
 			Path(vignetteRect),
 			with: .radialGradient(
-				Gradient(colors: [.clear, .black.opacity(0.85)]),
+				Gradient(colors: [.clear, .black.opacity(0.84 + (0.08 * urgencyBoost))]),
 				center: center,
 				startRadius: frame.torchRadius * 0.32,
 				endRadius: max(size.width, size.height) * 0.75
@@ -204,7 +214,68 @@ struct CaveRunSceneView: View {
 		)
 	}
 
-	private func drawDecisionBeacons(
+	fileprivate func drawTorchHand(
+		into context: inout GraphicsContext,
+		frame: CaveTunnelFrame,
+		elapsed: TimeInterval,
+		urgency: Double
+	) {
+		let bob = CGFloat(sin(elapsed * 8.6)) * 4 + (frame.cameraOffset.height * 0.30)
+		let anchor = CGPoint(
+			x: frame.torchAnchor.x + (frame.cameraOffset.width * 0.20),
+			y: frame.torchAnchor.y + bob
+		)
+		let torchTip = CGPoint(
+			x: anchor.x - 66,
+			y: anchor.y - 106
+		)
+		let shaftHalfWidth: CGFloat = 8
+		let shaftNormal = normalizedPerpendicular(from: anchor, to: torchTip)
+
+		let shaftPath = quadPath(
+			CGPoint(x: anchor.x + (shaftNormal.x * shaftHalfWidth), y: anchor.y + (shaftNormal.y * shaftHalfWidth)),
+			CGPoint(x: anchor.x - (shaftNormal.x * shaftHalfWidth), y: anchor.y - (shaftNormal.y * shaftHalfWidth)),
+			CGPoint(x: torchTip.x - (shaftNormal.x * shaftHalfWidth), y: torchTip.y - (shaftNormal.y * shaftHalfWidth)),
+			CGPoint(x: torchTip.x + (shaftNormal.x * shaftHalfWidth), y: torchTip.y + (shaftNormal.y * shaftHalfWidth))
+		)
+
+		context.fill(shaftPath, with: .color(Color(red: 0.34, green: 0.24, blue: 0.15).opacity(0.92)))
+
+		let handRect = CGRect(x: anchor.x - 26, y: anchor.y - 30, width: 46, height: 38)
+		context.fill(
+			Path(roundedRect: handRect, cornerRadius: 14),
+			with: .color(Color(red: 0.42, green: 0.30, blue: 0.23).opacity(0.95))
+		)
+
+		let urgencyBoost = max(0, min(1, urgency))
+		let flamePulse = CGFloat(0.5 + (0.5 * sin(elapsed * 11.2)))
+		let flameRadius = 14 + (flamePulse * 9) + (CGFloat(urgencyBoost) * 7)
+		let flameCenter = CGPoint(x: torchTip.x - 3, y: torchTip.y - 6)
+		let flameRect = CGRect(
+			x: flameCenter.x - flameRadius,
+			y: flameCenter.y - flameRadius,
+			width: flameRadius * 2,
+			height: flameRadius * 2
+		)
+
+		var flameContext = context
+		flameContext.blendMode = .screen
+		flameContext.fill(
+			Path(ellipseIn: flameRect),
+			with: .radialGradient(
+				Gradient(colors: [
+					Color(red: 1.0, green: 0.74, blue: 0.33).opacity(0.85),
+					Color(red: 0.96, green: 0.36, blue: 0.18).opacity(0.46 + (0.18 * urgencyBoost)),
+					.clear,
+				]),
+				center: flameCenter,
+				startRadius: 1,
+				endRadius: flameRadius
+			)
+		)
+	}
+
+	fileprivate func drawDecisionBeacons(
 		into context: inout GraphicsContext,
 		frame: CaveTunnelFrame,
 		size: CGSize,
@@ -213,14 +284,15 @@ struct CaveRunSceneView: View {
 		let choiceCount = decisionChoiceCount
 		let remainingRatio = decisionRemainingRatio ?? 1
 		let spacing = min(size.width * 0.18, 150)
-		let baseY = frame.horizonY + (size.height * 0.11)
+		let baseY = frame.horizonY + (size.height * 0.11) + (frame.cameraOffset.height * 0.25)
+		let baseX = (size.width * 0.5) + (frame.cameraOffset.width * 0.30)
 		let urgency = 1 - max(0, min(1, remainingRatio))
 		let pulse = 0.75 + (0.25 * sin(elapsed * 9)) + (urgency * 0.45)
 
 		for index in 0..<choiceCount {
 			let normalizedOffset = CGFloat(index) - (CGFloat(choiceCount - 1) * 0.5)
 			let center = CGPoint(
-				x: (size.width * 0.5) + (normalizedOffset * spacing),
+				x: baseX + (normalizedOffset * spacing),
 				y: baseY
 			)
 			let radius = 13 + (CGFloat(pulse) * 8)
@@ -253,14 +325,16 @@ struct CaveRunSceneView: View {
 		}
 	}
 
-	private func drawGameOverMask(into context: inout GraphicsContext, size: CGSize) {
+	fileprivate func drawGameOverMask(into context: inout GraphicsContext, size: CGSize) {
 		context.fill(
 			Path(CGRect(origin: .zero, size: size)),
 			with: .color(.black.opacity(0.35))
 		)
 	}
+}
 
-	private func quadPath(_ p1: CGPoint, _ p2: CGPoint, _ p3: CGPoint, _ p4: CGPoint) -> Path {
+extension CaveRunSceneView {
+	fileprivate func quadPath(_ p1: CGPoint, _ p2: CGPoint, _ p3: CGPoint, _ p4: CGPoint) -> Path {
 		var path = Path()
 		path.move(to: p1)
 		path.addLine(to: p2)
@@ -270,7 +344,14 @@ struct CaveRunSceneView: View {
 		return path
 	}
 
-	private func buildBatPath(
+	fileprivate func normalizedPerpendicular(from start: CGPoint, to end: CGPoint) -> CGPoint {
+		let vectorX = end.x - start.x
+		let vectorY = end.y - start.y
+		let length = max(0.001, sqrt((vectorX * vectorX) + (vectorY * vectorY)))
+		return CGPoint(x: -vectorY / length, y: vectorX / length)
+	}
+
+	fileprivate func buildBatPath(
 		center: CGPoint,
 		wingSpread: CGFloat,
 		wingLift: CGFloat,
@@ -288,5 +369,13 @@ struct CaveRunSceneView: View {
 		path.closeSubpath()
 
 		return path
+	}
+
+	fileprivate func mix(_ from: CGPoint, _ to: CGPoint, amount: CGFloat) -> CGPoint {
+		let clampedAmount = max(0, min(1, amount))
+		return CGPoint(
+			x: from.x + ((to.x - from.x) * clampedAmount),
+			y: from.y + ((to.y - from.y) * clampedAmount)
+		)
 	}
 }

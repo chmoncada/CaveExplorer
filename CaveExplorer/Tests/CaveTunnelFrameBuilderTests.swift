@@ -78,4 +78,42 @@ final class CaveTunnelFrameBuilderTests: XCTestCase {
 		let firstWidthB = frameB.layers[0].outerRect.width
 		XCTAssertNotEqual(firstWidthA, firstWidthB, accuracy: 0.001)
 	}
+
+	func test_makeFrame_exposesDynamicCameraOffset() {
+		let builder = CaveTunnelFrameBuilder(segmentCount: 10)
+		let size = CGSize(width: 900, height: 640)
+
+		let frameA = builder.makeFrame(
+			in: size,
+			elapsed: 0.1,
+			travelProgress: 0.2,
+			pulse: 0.5
+		)
+		let frameB = builder.makeFrame(
+			in: size,
+			elapsed: 0.8,
+			travelProgress: 0.2,
+			pulse: 0.5
+		)
+
+		XCTAssertNotEqual(frameA.cameraOffset.width, frameB.cameraOffset.width, accuracy: 0.001)
+		XCTAssertNotEqual(frameA.cameraOffset.height, frameB.cameraOffset.height, accuracy: 0.001)
+	}
+
+	func test_makeFrame_placesTorchAnchorInsideViewport() {
+		let builder = CaveTunnelFrameBuilder(segmentCount: 10)
+		let size = CGSize(width: 900, height: 640)
+
+		let frame = builder.makeFrame(
+			in: size,
+			elapsed: 1.0,
+			travelProgress: 0.5,
+			pulse: 0.7
+		)
+
+		XCTAssertGreaterThanOrEqual(frame.torchAnchor.x, 0)
+		XCTAssertLessThanOrEqual(frame.torchAnchor.x, size.width)
+		XCTAssertGreaterThanOrEqual(frame.torchAnchor.y, 0)
+		XCTAssertLessThanOrEqual(frame.torchAnchor.y, size.height)
+	}
 }
