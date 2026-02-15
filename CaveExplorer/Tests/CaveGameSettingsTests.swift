@@ -46,4 +46,26 @@ final class CaveGameSettingsTests: XCTestCase {
 		XCTAssertEqual(settings.decisionTime, 5.0, accuracy: 0.001)
 		XCTAssertEqual(settings.happyEndingStartPercent, 0.8, accuracy: 0.001)
 	}
+
+	func test_presets_useValidNormalizedValues() {
+		for preset in CaveGamePreset.allCases {
+			XCTAssertEqual(preset.settings, preset.settings.normalized)
+		}
+	}
+
+	func test_matchingPreset_returnsPresetWhenSettingsMatch() {
+		for preset in CaveGamePreset.allCases {
+			XCTAssertEqual(CaveGamePreset.matching(settings: preset.settings), preset)
+		}
+	}
+
+	func test_matchingPreset_returnsNilForCustomSettings() {
+		let custom = CaveGameSettings(
+			maxDepth: 8,
+			decisionTime: 4.5,
+			happyEndingStartPercent: 0.73
+		)
+
+		XCTAssertNil(CaveGamePreset.matching(settings: custom))
+	}
 }

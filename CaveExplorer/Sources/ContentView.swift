@@ -3,6 +3,7 @@ import SwiftUI
 
 public struct ContentView: View {
 	@State private var settings = CaveGameSettings.default
+	@State private var selectedPreset: CaveGamePreset? = .classic
 	@State private var session = CaveSession(config: CaveGameSettings.default.caveConfig)
 	@State private var torchPulse = 0.0
 	@State private var gameFlow: GameFlow = .home
@@ -41,6 +42,11 @@ public struct ContentView: View {
 			} else {
 				StartMenuOverlayView(
 					settings: settings,
+					selectedPreset: selectedPreset,
+					onSelectPreset: { preset in
+						selectedPreset = preset
+						settings = preset.settings
+					},
 					onStart: {
 						startRun()
 					},
@@ -54,9 +60,15 @@ public struct ContentView: View {
 		.sheet(item: $presentedSheet) { sheet in
 			switch sheet {
 			case .settings:
-				SettingsSheetView(settings: $settings) {
-					presentedSheet = nil
-				}
+				SettingsSheetView(
+					settings: $settings,
+					onSettingsChanged: { updatedSettings in
+						selectedPreset = CaveGamePreset.matching(settings: updatedSettings)
+					},
+					onClose: {
+						presentedSheet = nil
+					}
+				)
 			}
 		}
 		.task {
@@ -172,12 +184,15 @@ private struct GameplayOverlayView: View {
 
 private struct StartMenuOverlayView: View {
 	let settings: CaveGameSettings
+	let selectedPreset: CaveGamePreset?
+	let onSelectPreset: (CaveGamePreset) -> Void
 	let onStart: () -> Void
 	let onOpenSettings: () -> Void
 
 	private var settingsSummary: String {
-		"Ajustes activos: profundidad \(settings.maxDepth), "
-			+ "decision \(settings.decisionTime.formatted(.number.precision(.fractionLength(1))))s"
+		let presetName = selectedPreset?.title ?? "Personalizado"
+		let decision = settings.decisionTime.formatted(.number.precision(.fractionLength(1)))
+		return "Preset: \(presetName). Profundidad \(settings.maxDepth), decision \(decision)s"
 	}
 
 	var body: some View {
@@ -192,6 +207,11 @@ private struct StartMenuOverlayView: View {
 				Text("Explora la cueva antes de que la oscuridad te alcance.")
 					.font(.title3)
 					.foregroundStyle(.white.opacity(0.92))
+
+				PresetSelectorView(
+					selectedPreset: selectedPreset,
+					onSelectPreset: onSelectPreset
+				)
 
 				Text(settingsSummary)
 					.font(.subheadline)
@@ -211,7 +231,7 @@ private struct StartMenuOverlayView: View {
 					.controlSize(.large)
 				}
 			}
-			.frame(maxWidth: 540, alignment: .leading)
+			.frame(maxWidth: 620, alignment: .leading)
 			.padding(24)
 			.background(.black.opacity(0.44), in: .rect(cornerRadius: 18))
 			.overlay {
@@ -225,8 +245,32 @@ private struct StartMenuOverlayView: View {
 	}
 }
 
+private struct PresetSelectorView: View {
+	let selectedPreset: CaveGamePreset?
+	let onSelectPreset: (CaveGamePreset) -> Void
+
+	var body: some View {
+		HStack(spacing: 8) {
+			ForEach(CaveGamePreset.allCases) { preset in
+				if selectedPreset == preset {
+					Button(preset.title) {
+						onSelectPreset(preset)
+					}
+					.buttonStyle(.borderedProminent)
+				} else {
+					Button(preset.title) {
+						onSelectPreset(preset)
+					}
+					.buttonStyle(.bordered)
+				}
+			}
+		}
+	}
+}
+
 private struct SettingsSheetView: View {
 	@Binding var settings: CaveGameSettings
+	let onSettingsChanged: (CaveGameSettings) -> Void
 	let onClose: () -> Void
 
 	var body: some View {
@@ -244,6 +288,9 @@ private struct SettingsSheetView: View {
 		}
 		.padding(20)
 		.frame(minWidth: 480)
+		.onChange(of: settings) { _, newSettings in
+			onSettingsChanged(newSettings)
+		}
 	}
 }
 
