@@ -15,6 +15,7 @@ public struct ContentView: View {
 				tunnelBuilder: tunnelBuilder,
 				atmosphereBuilder: atmosphereBuilder,
 				travelProgress: session.travelProgress ?? 0,
+				depthProgress: session.depthProgress,
 				decisionRemainingRatio: session.decisionRemainingRatio,
 				decisionChoiceCount: session.choices.count,
 				isGameOver: session.isGameOver,

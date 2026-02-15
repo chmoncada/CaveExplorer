@@ -116,4 +116,57 @@ final class CaveTunnelFrameBuilderTests: XCTestCase {
 		XCTAssertGreaterThanOrEqual(frame.torchAnchor.y, 0)
 		XCTAssertLessThanOrEqual(frame.torchAnchor.y, size.height)
 	}
+
+	func test_makeFrame_urgencyIncreasesCameraDisplacement() {
+		let builder = CaveTunnelFrameBuilder(segmentCount: 10)
+		let size = CGSize(width: 900, height: 640)
+
+		let lowUrgency = builder.makeFrame(
+			in: size,
+			elapsed: 0.37,
+			travelProgress: 0.42,
+			depthProgress: 0.4,
+			urgency: 0.0,
+			pulse: 0.5
+		)
+		let highUrgency = builder.makeFrame(
+			in: size,
+			elapsed: 0.37,
+			travelProgress: 0.42,
+			depthProgress: 0.4,
+			urgency: 1.0,
+			pulse: 0.5
+		)
+
+		XCTAssertGreaterThan(displacement(of: highUrgency), displacement(of: lowUrgency))
+	}
+
+	func test_makeFrame_depthProgressIncreasesCameraDisplacement() {
+		let builder = CaveTunnelFrameBuilder(segmentCount: 10)
+		let size = CGSize(width: 900, height: 640)
+
+		let shallow = builder.makeFrame(
+			in: size,
+			elapsed: 0.37,
+			travelProgress: 0.42,
+			depthProgress: 0.0,
+			urgency: 0.25,
+			pulse: 0.5
+		)
+		let deep = builder.makeFrame(
+			in: size,
+			elapsed: 0.37,
+			travelProgress: 0.42,
+			depthProgress: 1.0,
+			urgency: 0.25,
+			pulse: 0.5
+		)
+
+		XCTAssertGreaterThan(displacement(of: deep), displacement(of: shallow))
+	}
+
+	private func displacement(of frame: CaveTunnelFrame) -> CGFloat {
+		sqrt(
+			(frame.cameraOffset.width * frame.cameraOffset.width) + (frame.cameraOffset.height * frame.cameraOffset.height))
+	}
 }

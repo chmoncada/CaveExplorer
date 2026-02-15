@@ -5,6 +5,7 @@ struct CaveRunSceneView: View {
 	let tunnelBuilder: CaveTunnelFrameBuilder
 	let atmosphereBuilder: CaveAtmosphereFrameBuilder
 	let travelProgress: Double
+	let depthProgress: Double
 	let decisionRemainingRatio: Double?
 	let decisionChoiceCount: Int
 	let isGameOver: Bool
@@ -20,6 +21,8 @@ struct CaveRunSceneView: View {
 					in: size,
 					elapsed: elapsed,
 					travelProgress: travelProgress,
+					depthProgress: depthProgress,
+					urgency: urgency,
 					pulse: torchPulse
 				)
 
@@ -38,6 +41,7 @@ struct CaveRunSceneView: View {
 				drawBats(into: &context, frame: atmosphereFrame)
 				drawTorchGlow(into: &context, frame: tunnelFrame, size: size, urgency: urgency)
 				drawTorchHand(into: &context, frame: tunnelFrame, elapsed: elapsed, urgency: urgency)
+				drawThreatPulse(into: &context, size: size, elapsed: elapsed, urgency: urgency)
 
 				if decisionChoiceCount > 0 {
 					drawDecisionBeacons(
@@ -272,6 +276,24 @@ extension CaveRunSceneView {
 				startRadius: 1,
 				endRadius: flameRadius
 			)
+		)
+	}
+
+	fileprivate func drawThreatPulse(
+		into context: inout GraphicsContext,
+		size: CGSize,
+		elapsed: TimeInterval,
+		urgency: Double
+	) {
+		let clampedUrgency = max(0, min(1, urgency))
+		guard clampedUrgency > 0.35 else { return }
+
+		let pulse = 0.5 + (0.5 * sin(elapsed * (6 + (clampedUrgency * 10))))
+		let opacity = (clampedUrgency - 0.30) * 0.20 * pulse
+		let tintRect = CGRect(origin: .zero, size: size)
+		context.fill(
+			Path(tintRect),
+			with: .color(Color(red: 0.45, green: 0.03, blue: 0.03).opacity(opacity))
 		)
 	}
 

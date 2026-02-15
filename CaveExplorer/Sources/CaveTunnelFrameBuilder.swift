@@ -27,6 +27,8 @@ struct CaveTunnelFrameBuilder {
 		in size: CGSize,
 		elapsed: TimeInterval,
 		travelProgress: Double,
+		depthProgress: Double = 0,
+		urgency: Double = 0,
 		pulse: Double
 	) -> CaveTunnelFrame {
 		guard size.width > 0, size.height > 0 else {
@@ -39,7 +41,16 @@ struct CaveTunnelFrameBuilder {
 			)
 		}
 
-		let cameraMotion = makeCameraMotion(in: size, elapsed: elapsed, travelProgress: travelProgress)
+		let clampedDepth = clamp(depthProgress, minValue: 0, maxValue: 1)
+		let clampedUrgency = clamp(urgency, minValue: 0, maxValue: 1)
+
+		let cameraMotion = makeCameraMotion(
+			in: size,
+			elapsed: elapsed,
+			travelProgress: travelProgress,
+			depthProgress: clampedDepth,
+			urgency: clampedUrgency
+		)
 		let layers = makeLayers(in: size, motion: cameraMotion)
 
 		let clampedPulse = clamp(pulse, minValue: 0, maxValue: 1)
@@ -66,19 +77,28 @@ struct CaveTunnelFrameBuilder {
 	private func makeCameraMotion(
 		in size: CGSize,
 		elapsed: TimeInterval,
-		travelProgress: Double
+		travelProgress: Double,
+		depthProgress: Double,
+		urgency: Double
 	) -> CameraMotion {
-		let motion = (elapsed * 0.55) + (travelProgress * 1.8)
-		let walkPhase = (elapsed * 3.4) + (travelProgress * 6.8)
+		let movementRate = 3.4 + (depthProgress * 0.9) + (urgency * 1.2)
+		let movementPhase = (elapsed * movementRate) + (travelProgress * (6.8 + (depthProgress * 3.0)))
+		let motionIntensity = 1 + (depthProgress * 0.45) + (urgency * 0.75)
+
+		let motion = ((elapsed * 0.55) + (travelProgress * 1.8)) * (1 + (depthProgress * 0.28) + (urgency * 0.50))
 		let sway = sin(elapsed * 2.4) * 0.012
 		let nod = sin(elapsed * 1.9) * 0.010
-		let walkStrafe = sin(walkPhase) * (size.width * 0.010)
-		let walkBounce = abs(sin(walkPhase * 1.8)) * (size.height * 0.010)
+		let walkStrafe = sin(movementPhase) * (size.width * 0.010 * motionIntensity)
+		let walkBounce = abs(sin(movementPhase * 1.8)) * (size.height * 0.010 * motionIntensity)
+
+		let tremorAmount = size.width * (0.002 + (0.006 * pow(urgency, 1.4)))
+		let tremorX = sin((elapsed * 33) + (travelProgress * 10)) * tremorAmount
+		let tremorY = cos((elapsed * 29) + (travelProgress * 8)) * (tremorAmount * 0.7)
 
 		return CameraMotion(
 			motion: motion,
-			centerX: (size.width * (0.5 + CGFloat(sway))) + walkStrafe,
-			centerY: (size.height * (0.54 + CGFloat(nod))) + walkBounce
+			centerX: (size.width * (0.5 + CGFloat(sway))) + walkStrafe + tremorX,
+			centerY: (size.height * (0.54 + CGFloat(nod))) + walkBounce + tremorY
 		)
 	}
 
