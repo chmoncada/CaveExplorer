@@ -95,17 +95,42 @@ final class CaveSoundControllerTests: XCTestCase {
 		)
 	}
 
+	func test_applySettings_updatesPlayers() {
+		let spyPlayer = SpySoundPlayer()
+		let spyMusicPlayer = SpyBackgroundMusicPlayer()
+		let controller = CaveSoundController(player: spyPlayer, backgroundMusicPlayer: spyMusicPlayer)
+
+		controller.apply(settings: CaveAudioSettings(effectsVolume: 0.42, musicVolume: 0.18, isMuted: true))
+
+		XCTAssertEqual(spyPlayer.latestEffectsVolume, 0.42, accuracy: 0.0001)
+		XCTAssertTrue(spyPlayer.latestMutedState)
+		XCTAssertEqual(spyMusicPlayer.latestMusicVolume, 0.18, accuracy: 0.0001)
+		XCTAssertTrue(spyMusicPlayer.latestMutedState)
+	}
+
 	private final class SpySoundPlayer: CaveSoundPlaying {
 		private(set) var playedCues: [CaveSoundCue] = []
+		private(set) var latestEffectsVolume: Float = 1
+		private(set) var latestMutedState = false
 
 		func play(cue: CaveSoundCue) {
 			playedCues.append(cue)
+		}
+
+		func setEffectsVolume(_ volume: Float) {
+			latestEffectsVolume = volume
+		}
+
+		func setMuted(_ isMuted: Bool) {
+			latestMutedState = isMuted
 		}
 	}
 
 	private final class SpyBackgroundMusicPlayer: CaveBackgroundMusicPlaying {
 		private(set) var startCalls = 0
 		private(set) var stopCalls = 0
+		private(set) var latestMusicVolume: Float = 1
+		private(set) var latestMutedState = false
 
 		func startLoop() {
 			startCalls += 1
@@ -113,6 +138,14 @@ final class CaveSoundControllerTests: XCTestCase {
 
 		func stop() {
 			stopCalls += 1
+		}
+
+		func setMusicVolume(_ volume: Float) {
+			latestMusicVolume = volume
+		}
+
+		func setMuted(_ isMuted: Bool) {
+			latestMutedState = isMuted
 		}
 	}
 }

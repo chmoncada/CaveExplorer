@@ -49,18 +49,24 @@ enum CaveSoundCue: Hashable {
 @MainActor
 protocol CaveSoundPlaying: AnyObject {
 	func play(cue: CaveSoundCue)
+	func setEffectsVolume(_ volume: Float)
+	func setMuted(_ isMuted: Bool)
 }
 
 @MainActor
 protocol CaveBackgroundMusicPlaying: AnyObject {
 	func startLoop()
 	func stop()
+	func setMusicVolume(_ volume: Float)
+	func setMuted(_ isMuted: Bool)
 }
 
 @MainActor
 final class CaveBundleSoundPlayer: CaveSoundPlaying {
 	private let bundle: Bundle
 	private var players: [CaveSoundCue: AVAudioPlayer] = [:]
+	private var effectsVolume = Float(CaveAudioSettings.default.effectsVolume)
+	private var isMuted = CaveAudioSettings.default.isMuted
 
 	init(bundle: Bundle = .main) {
 		self.bundle = bundle
@@ -70,6 +76,16 @@ final class CaveBundleSoundPlayer: CaveSoundPlaying {
 		guard let player = player(for: cue) else { return }
 		player.currentTime = 0
 		player.play()
+	}
+
+	func setEffectsVolume(_ volume: Float) {
+		effectsVolume = min(1, max(0, volume))
+		updateAllPlayerVolumes()
+	}
+
+	func setMuted(_ isMuted: Bool) {
+		self.isMuted = isMuted
+		updateAllPlayerVolumes()
 	}
 
 	private func player(for cue: CaveSoundCue) -> AVAudioPlayer? {
@@ -83,12 +99,23 @@ final class CaveBundleSoundPlayer: CaveSoundPlaying {
 
 		do {
 			let player = try AVAudioPlayer(contentsOf: url)
-			player.volume = cue.volume
+			player.volume = effectiveVolume(for: cue)
 			player.prepareToPlay()
 			players[cue] = player
 			return player
 		} catch {
 			return nil
+		}
+	}
+
+	private func effectiveVolume(for cue: CaveSoundCue) -> Float {
+		guard !isMuted else { return 0 }
+		return cue.volume * effectsVolume
+	}
+
+	private func updateAllPlayerVolumes() {
+		for (cue, player) in players {
+			player.volume = effectiveVolume(for: cue)
 		}
 	}
 
@@ -102,6 +129,8 @@ final class CaveBundleSoundPlayer: CaveSoundPlaying {
 final class CaveBackgroundMusicPlayer: CaveBackgroundMusicPlaying {
 	private let bundle: Bundle
 	private var player: AVAudioPlayer?
+	private var musicVolume = Float(CaveAudioSettings.default.musicVolume)
+	private var isMuted = CaveAudioSettings.default.isMuted
 
 	init(bundle: Bundle = .main) {
 		self.bundle = bundle
@@ -118,6 +147,16 @@ final class CaveBackgroundMusicPlayer: CaveBackgroundMusicPlaying {
 		player?.stop()
 	}
 
+	func setMusicVolume(_ volume: Float) {
+		musicVolume = min(1, max(0, volume))
+		updatePlayerVolume()
+	}
+
+	func setMuted(_ isMuted: Bool) {
+		self.isMuted = isMuted
+		updatePlayerVolume()
+	}
+
 	private func loadPlayerIfNeeded() -> AVAudioPlayer? {
 		if let player {
 			return player
@@ -130,13 +169,21 @@ final class CaveBackgroundMusicPlayer: CaveBackgroundMusicPlaying {
 		do {
 			let loadedPlayer = try AVAudioPlayer(contentsOf: url)
 			loadedPlayer.numberOfLoops = -1
-			loadedPlayer.volume = 0.5
+			loadedPlayer.volume = effectiveMusicVolume
 			loadedPlayer.prepareToPlay()
 			player = loadedPlayer
 			return loadedPlayer
 		} catch {
 			return nil
 		}
+	}
+
+	private var effectiveMusicVolume: Float {
+		isMuted ? 0 : musicVolume
+	}
+
+	private func updatePlayerVolume() {
+		player?.volume = effectiveMusicVolume
 	}
 
 	private func resourceURL(fileName: String) -> URL? {
@@ -233,6 +280,14 @@ final class CaveSoundController {
 		self.player = player
 		self.backgroundMusicPlayer = backgroundMusicPlayer
 		self.tracker = tracker
+	}
+
+	func apply(settings: CaveAudioSettings) {
+		let normalized = settings.normalized
+		player.setEffectsVolume(Float(normalized.effectsVolume))
+		player.setMuted(normalized.isMuted)
+		backgroundMusicPlayer.setMusicVolume(Float(normalized.musicVolume))
+		backgroundMusicPlayer.setMuted(normalized.isMuted)
 	}
 
 	func startRun(initialState: CaveRunState?) {

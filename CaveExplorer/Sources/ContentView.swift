@@ -3,6 +3,7 @@ import SwiftUI
 
 public struct ContentView: View {
 	@State private var settings = CaveGameSettings.default
+	@State private var audioSettings = CaveAudioSettings.default
 	@State private var selectedPreset: CaveGamePreset? = .classic
 	@State private var session = CaveSession(config: CaveGameSettings.default.caveConfig)
 	@State private var torchPulse = 0.0
@@ -62,8 +63,9 @@ public struct ContentView: View {
 		.sheet(item: $presentedSheet) { sheet in
 			switch sheet {
 			case .settings:
-				SettingsSheetView(
+				CaveSettingsSheetView(
 					settings: $settings,
+					audioSettings: $audioSettings,
 					onSettingsChanged: { updatedSettings in
 						selectedPreset = CaveGamePreset.matching(settings: updatedSettings)
 					},
@@ -78,6 +80,12 @@ public struct ContentView: View {
 		}
 		.task {
 			await runTorchAnimationLoop()
+		}
+		.task {
+			soundController.apply(settings: audioSettings)
+		}
+		.onChange(of: audioSettings) { _, updatedAudioSettings in
+			soundController.apply(settings: updatedAudioSettings)
 		}
 	}
 
@@ -108,6 +116,7 @@ public struct ContentView: View {
 	private func startRun() {
 		session = CaveSession(config: settings.caveConfig)
 		gameFlow = .playing
+		soundController.apply(settings: audioSettings)
 		soundController.startRun(initialState: session.runState)
 	}
 
@@ -273,32 +282,6 @@ private struct PresetSelectorView: View {
 	}
 }
 
-private struct SettingsSheetView: View {
-	@Binding var settings: CaveGameSettings
-	let onSettingsChanged: (CaveGameSettings) -> Void
-	let onClose: () -> Void
-
-	var body: some View {
-		VStack(spacing: 16) {
-			SettingsPanelView(settings: $settings)
-
-			HStack {
-				Spacer()
-
-				Button("Cerrar") {
-					onClose()
-				}
-				.buttonStyle(.borderedProminent)
-			}
-		}
-		.padding(20)
-		.frame(minWidth: 480)
-		.onChange(of: settings) { _, newSettings in
-			onSettingsChanged(newSettings)
-		}
-	}
-}
-
 private struct TopHUDView: View {
 	let currentDepth: Int
 	let maxDepth: Int
@@ -403,61 +386,6 @@ private struct ChoicePanelView: View {
 			}
 		default:
 			return "arrow.up"
-		}
-	}
-}
-
-private struct SettingsPanelView: View {
-	@Binding var settings: CaveGameSettings
-
-	var body: some View {
-		VStack(alignment: .leading, spacing: 10) {
-			Text("Ajustes de partida")
-				.font(.headline)
-				.foregroundStyle(.white)
-
-			HStack {
-				Text("Profundidad: \(settings.maxDepth)")
-					.foregroundStyle(.white.opacity(0.9))
-
-				Spacer()
-
-				Stepper("Profundidad", value: $settings.maxDepth, in: CaveGameSettings.depthRange)
-					.labelsHidden()
-			}
-
-			VStack(alignment: .leading, spacing: 4) {
-				Text(
-					"Tiempo de decision: \(settings.decisionTime, format: .number.precision(.fractionLength(1)))s"
-				)
-				.foregroundStyle(.white.opacity(0.9))
-
-				Slider(
-					value: $settings.decisionTime,
-					in: CaveGameSettings.decisionTimeRange,
-					step: 0.5
-				)
-			}
-
-			VStack(alignment: .leading, spacing: 4) {
-				Text(
-					"Final feliz desde: \(Int(settings.happyEndingStartPercent * 100), format: .number)%"
-				)
-				.foregroundStyle(.white.opacity(0.9))
-
-				Slider(
-					value: $settings.happyEndingStartPercent,
-					in: CaveGameSettings.happyEndingStartPercentRange,
-					step: 0.05
-				)
-			}
-		}
-		.frame(maxWidth: 540, alignment: .leading)
-		.padding(12)
-		.background(.black.opacity(0.34), in: .rect(cornerRadius: 14))
-		.overlay {
-			RoundedRectangle(cornerRadius: 14)
-				.stroke(.white.opacity(0.18), lineWidth: 1)
 		}
 	}
 }
