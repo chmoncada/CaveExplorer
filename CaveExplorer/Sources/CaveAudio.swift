@@ -1,4 +1,4 @@
-import AppKit
+import AVFAudio
 import CaveDomain
 import CaveGameplay
 import Foundation
@@ -11,20 +11,37 @@ enum CaveSoundCue: Hashable {
 	case failureEnding
 	case happyEnding
 
-	var systemSoundName: NSSound.Name {
+	var fileName: String {
 		switch self {
 		case .runStarted:
-			return NSSound.Name("Pop")
+			return "run_started"
 		case .decisionAppeared:
-			return NSSound.Name("Ping")
+			return "decision_appeared"
 		case .decisionUrgent:
-			return NSSound.Name("Basso")
+			return "decision_urgent"
 		case .pathSelected:
-			return NSSound.Name("Tink")
+			return "path_selected"
 		case .failureEnding:
-			return NSSound.Name("Funk")
+			return "failure_ending"
 		case .happyEnding:
-			return NSSound.Name("Hero")
+			return "happy_ending"
+		}
+	}
+
+	var volume: Float {
+		switch self {
+		case .runStarted:
+			return 0.75
+		case .decisionAppeared:
+			return 0.78
+		case .decisionUrgent:
+			return 0.92
+		case .pathSelected:
+			return 0.72
+		case .failureEnding:
+			return 0.85
+		case .happyEnding:
+			return 0.9
 		}
 	}
 }
@@ -35,25 +52,96 @@ protocol CaveSoundPlaying: AnyObject {
 }
 
 @MainActor
-final class CaveSystemSoundPlayer: CaveSoundPlaying {
-	private var sounds: [CaveSoundCue: NSSound] = [:]
+protocol CaveBackgroundMusicPlaying: AnyObject {
+	func startLoop()
+	func stop()
+}
 
-	func play(cue: CaveSoundCue) {
-		guard let sound = sound(for: cue) else { return }
-		sound.stop()
-		sound.play()
+@MainActor
+final class CaveBundleSoundPlayer: CaveSoundPlaying {
+	private let bundle: Bundle
+	private var players: [CaveSoundCue: AVAudioPlayer] = [:]
+
+	init(bundle: Bundle = .main) {
+		self.bundle = bundle
 	}
 
-	private func sound(for cue: CaveSoundCue) -> NSSound? {
-		if let cached = sounds[cue] {
+	func play(cue: CaveSoundCue) {
+		guard let player = player(for: cue) else { return }
+		player.currentTime = 0
+		player.play()
+	}
+
+	private func player(for cue: CaveSoundCue) -> AVAudioPlayer? {
+		if let cached = players[cue] {
 			return cached
 		}
 
-		guard let loaded = NSSound(named: cue.systemSoundName) else {
+		guard let url = resourceURL(fileName: cue.fileName) else {
 			return nil
 		}
-		sounds[cue] = loaded
-		return loaded
+
+		do {
+			let player = try AVAudioPlayer(contentsOf: url)
+			player.volume = cue.volume
+			player.prepareToPlay()
+			players[cue] = player
+			return player
+		} catch {
+			return nil
+		}
+	}
+
+	private func resourceURL(fileName: String) -> URL? {
+		bundle.url(forResource: fileName, withExtension: "wav", subdirectory: "Audio")
+			?? bundle.url(forResource: fileName, withExtension: "wav")
+	}
+}
+
+@MainActor
+final class CaveBackgroundMusicPlayer: CaveBackgroundMusicPlaying {
+	private let bundle: Bundle
+	private var player: AVAudioPlayer?
+
+	init(bundle: Bundle = .main) {
+		self.bundle = bundle
+	}
+
+	func startLoop() {
+		guard let player = loadPlayerIfNeeded() else { return }
+		guard !player.isPlaying else { return }
+		player.currentTime = 0
+		player.play()
+	}
+
+	func stop() {
+		player?.stop()
+	}
+
+	private func loadPlayerIfNeeded() -> AVAudioPlayer? {
+		if let player {
+			return player
+		}
+
+		guard let url = resourceURL(fileName: "bg_chase_loop") else {
+			return nil
+		}
+
+		do {
+			let loadedPlayer = try AVAudioPlayer(contentsOf: url)
+			loadedPlayer.numberOfLoops = -1
+			loadedPlayer.volume = 0.5
+			loadedPlayer.prepareToPlay()
+			player = loadedPlayer
+			return loadedPlayer
+		} catch {
+			return nil
+		}
+	}
+
+	private func resourceURL(fileName: String) -> URL? {
+		bundle.url(forResource: fileName, withExtension: "wav", subdirectory: "Audio")
+			?? bundle.url(forResource: fileName, withExtension: "wav")
 	}
 }
 
@@ -130,22 +218,26 @@ struct CaveSoundEventTracker {
 @MainActor
 final class CaveSoundController {
 	private let player: any CaveSoundPlaying
+	private let backgroundMusicPlayer: any CaveBackgroundMusicPlaying
 	private var tracker: CaveSoundEventTracker
 
 	convenience init() {
-		self.init(player: CaveSystemSoundPlayer())
+		self.init(player: CaveBundleSoundPlayer(), backgroundMusicPlayer: CaveBackgroundMusicPlayer())
 	}
 
 	init(
 		player: any CaveSoundPlaying,
+		backgroundMusicPlayer: any CaveBackgroundMusicPlaying,
 		tracker: CaveSoundEventTracker = CaveSoundEventTracker()
 	) {
 		self.player = player
+		self.backgroundMusicPlayer = backgroundMusicPlayer
 		self.tracker = tracker
 	}
 
 	func startRun(initialState: CaveRunState?) {
 		tracker.reset()
+		backgroundMusicPlayer.startLoop()
 		player.play(cue: .runStarted)
 		handle(runState: initialState)
 	}
@@ -155,9 +247,26 @@ final class CaveSoundController {
 	}
 
 	func handle(runState: CaveRunState?) {
+		guard let runState else {
+			stopAll()
+			return
+		}
+
+		switch runState.phase {
+		case .traveling, .waitingForChoice:
+			backgroundMusicPlayer.startLoop()
+		case .ended:
+			backgroundMusicPlayer.stop()
+		}
+
 		let cues = tracker.cues(for: runState)
 		for cue in cues {
 			player.play(cue: cue)
 		}
+	}
+
+	func stopAll() {
+		tracker.reset()
+		backgroundMusicPlayer.stop()
 	}
 }

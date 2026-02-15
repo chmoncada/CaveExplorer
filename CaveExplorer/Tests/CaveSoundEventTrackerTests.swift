@@ -43,22 +43,56 @@ final class CaveSoundEventTrackerTests: XCTestCase {
 
 @MainActor
 final class CaveSoundControllerTests: XCTestCase {
-	func test_startRun_playsRunStartedAndInitialStateCues() {
+	func test_startRun_playsRunStartedInitialCueAndStartsMusicLoop() {
 		let spyPlayer = SpySoundPlayer()
-		let controller = CaveSoundController(player: spyPlayer)
+		let spyMusicPlayer = SpyBackgroundMusicPlayer()
+		let controller = CaveSoundController(player: spyPlayer, backgroundMusicPlayer: spyMusicPlayer)
 
 		controller.startRun(initialState: waitingState(nodeID: 1, remaining: 5, total: 5))
 
 		XCTAssertEqual(spyPlayer.playedCues, [.runStarted, .decisionAppeared])
+		XCTAssertEqual(spyMusicPlayer.startCalls, 2)
+		XCTAssertEqual(spyMusicPlayer.stopCalls, 0)
 	}
 
 	func test_choosePath_playsPathSelectedCue() {
 		let spyPlayer = SpySoundPlayer()
-		let controller = CaveSoundController(player: spyPlayer)
+		let controller = CaveSoundController(
+			player: spyPlayer,
+			backgroundMusicPlayer: SpyBackgroundMusicPlayer()
+		)
 
 		controller.choosePath()
 
 		XCTAssertEqual(spyPlayer.playedCues, [.pathSelected])
+	}
+
+	func test_handle_withEndedState_stopsMusicAndPlaysEndingCue() {
+		let spyPlayer = SpySoundPlayer()
+		let spyMusicPlayer = SpyBackgroundMusicPlayer()
+		let controller = CaveSoundController(player: spyPlayer, backgroundMusicPlayer: spyMusicPlayer)
+
+		controller.handle(runState: endedState(.monsterAttack))
+
+		XCTAssertEqual(spyPlayer.playedCues, [.failureEnding])
+		XCTAssertEqual(spyMusicPlayer.startCalls, 0)
+		XCTAssertEqual(spyMusicPlayer.stopCalls, 1)
+	}
+
+	func test_stopAll_resetsTrackerAndStopsMusic() {
+		let spyPlayer = SpySoundPlayer()
+		let spyMusicPlayer = SpyBackgroundMusicPlayer()
+		let controller = CaveSoundController(player: spyPlayer, backgroundMusicPlayer: spyMusicPlayer)
+
+		controller.startRun(initialState: waitingState(nodeID: 3, remaining: 5, total: 5))
+		controller.stopAll()
+		controller.handle(runState: waitingState(nodeID: 3, remaining: 5, total: 5))
+
+		XCTAssertEqual(spyMusicPlayer.stopCalls, 1)
+		XCTAssertEqual(
+			spyPlayer.playedCues,
+			[.runStarted, .decisionAppeared, .decisionAppeared]
+		)
 	}
 
 	private final class SpySoundPlayer: CaveSoundPlaying {
@@ -66,6 +100,19 @@ final class CaveSoundControllerTests: XCTestCase {
 
 		func play(cue: CaveSoundCue) {
 			playedCues.append(cue)
+		}
+	}
+
+	private final class SpyBackgroundMusicPlayer: CaveBackgroundMusicPlaying {
+		private(set) var startCalls = 0
+		private(set) var stopCalls = 0
+
+		func startLoop() {
+			startCalls += 1
+		}
+
+		func stop() {
+			stopCalls += 1
 		}
 	}
 }

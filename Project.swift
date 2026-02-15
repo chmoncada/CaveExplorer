@@ -18,7 +18,7 @@ let project = Project(
 			deploymentTargets: .macOS("15.0"),
 			infoPlist: .default,
 			sources: ["CaveExplorer/Sources/**"],
-			resources: [],
+			resources: ["CaveExplorer/Resources/**"],
 			dependencies: [
 				.package(product: "SwiftLintBuildToolPlugin", type: .plugin),
 				.package(product: "CaveDomain"),

@@ -113,7 +113,7 @@ public struct ContentView: View {
 
 	private func returnHome() {
 		gameFlow = .home
-		soundController.handle(runState: nil)
+		soundController.stopAll()
 	}
 
 	private func runGameLoop() async {
