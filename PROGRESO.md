@@ -64,6 +64,16 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
   - tests para reglas avanzadas del generador de mapa,
   - smoke tests de audio controller ante cambios rápidos de estado.
 
+## Aprendizajes hasta ahora
+- Separar dominio (SPM) de la app (SwiftUI) facilitó probar la lógica sin depender de UI ni audio real.
+- Commits pequeños por bloque aceleraron iteración y redujeron regresiones al detectar fallos temprano.
+- Probar cada bloque con `format` + `tests` antes de comitear evitó arrastrar deuda entre iteraciones.
+- El audio mejora mucho con capas (música + ambiente + SFX) y mezcla dinámica por estado, más que con un solo track constante.
+- En macOS, cambios de actor isolation pueden romper compilación en inicializadores con defaults; conviene validar eso en cada refactor de ``.
+- Tener settings desde home (y no siempre visibles en gameplay) mejora claridad y evita sobrecargar pantalla de juego.
+- El timer visual de decisión da feedback inmediato y es clave para la tensión del loop principal.
+- Mantener backlog vivo en este archivo ayuda a retomar rápido sin perder contexto de producto.
+
 ## Cómo retomar rápido otro día
 1. `tuist generate`
 2. Abrir `CaveExplorer.xcodeproj`
