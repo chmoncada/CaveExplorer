@@ -8,6 +8,7 @@ public struct ContentView: View {
 	@State private var torchPulse = 0.0
 	@State private var gameFlow: GameFlow = .home
 	@State private var presentedSheet: PresentedSheet?
+	@State private var soundController = CaveSoundController()
 
 	private let tunnelBuilder = CaveTunnelFrameBuilder(segmentCount: 11)
 	private let atmosphereBuilder = CaveAtmosphereFrameBuilder(fogBandCount: 4, dustCount: 36, batCount: 3)
@@ -30,6 +31,7 @@ public struct ContentView: View {
 					session: session,
 					onChoose: { optionIndex in
 						session.choose(optionIndex: optionIndex)
+						soundController.choosePath()
 					},
 					onNewMap: {
 						startRun()
@@ -106,10 +108,12 @@ public struct ContentView: View {
 	private func startRun() {
 		session = CaveSession(config: settings.caveConfig)
 		gameFlow = .playing
+		soundController.startRun(initialState: session.runState)
 	}
 
 	private func returnHome() {
 		gameFlow = .home
+		soundController.handle(runState: nil)
 	}
 
 	private func runGameLoop() async {
@@ -119,6 +123,7 @@ public struct ContentView: View {
 		while !Task.isCancelled {
 			if gameFlow == .playing {
 				session.tick(deltaTime: fixedDelta)
+				soundController.handle(runState: session.runState)
 			}
 			try? await Task.sleep(for: frameDuration)
 		}

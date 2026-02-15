@@ -14,12 +14,14 @@
 		4DE60168CB1E4779A5D265A7 /* CaveMapEngine in Frameworks */ = {isa = PBXBuildFile; productRef = E1B8F15A3F0592575E4EB013 /* CaveMapEngine */; };
 		56BC2BC94B7BD0CF3D0C73B3 /* CaveExplorerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF1EBA46CD0A7FE473D50B0 /* CaveExplorerTests.swift */; };
 		5992872546ADB20FCF95E55D /* CaveGameSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5615DF4CBA4DE53980BF604D /* CaveGameSettings.swift */; };
+		7472F85D5C72AB99269C550F /* CaveAudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = D80F6A1D1DC5892E31D97723 /* CaveAudio.swift */; };
 		8817277057B75F1C90A8B7A3 /* CaveTunnelFrameBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64722F8272DD9DCE8E5E8341 /* CaveTunnelFrameBuilder.swift */; };
 		8BF891738CCCC006B90E8E7A /* CaveExplorerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83F3D7A97A58D3F00E4FA7F9 /* CaveExplorerApp.swift */; };
 		8F6AFDD20F9057A1B2B29560 /* CaveGameplay in Frameworks */ = {isa = PBXBuildFile; productRef = D0642C5EC26683EBA14977B2 /* CaveGameplay */; };
 		CE0E937495CD51E180E743A1 /* CaveAtmosphereFrameBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E0E2E6F15E3AEB0775D6499 /* CaveAtmosphereFrameBuilder.swift */; };
 		D959049C34E19BB5532715FD /* CaveAtmosphereFrameBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5477ED75CE98699F3653DF10 /* CaveAtmosphereFrameBuilderTests.swift */; };
 		DD0E48D53AA236E16202C43F /* CaveDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 6C7FD0BCC3148DD0F0345999 /* CaveDomain */; };
+		DDAC17FAEB9C2D137BC21EC2 /* CaveSoundEventTrackerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19CC00FA34CF263728C39EEF /* CaveSoundEventTrackerTests.swift */; };
 		E00742E0054544416A3D61FD /* CaveMapEngine in Frameworks */ = {isa = PBXBuildFile; productRef = F1D2F256E3D78DE0553713DB /* CaveMapEngine */; };
 		E5F5E283A63A5E0A02DEC8C2 /* CaveGameplay in Frameworks */ = {isa = PBXBuildFile; productRef = 541F8C8AF811B442F89ED9DB /* CaveGameplay */; };
 		EADE591F5873410BAC151F56 /* CaveRunSceneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D4EB76F2662460B5747591C /* CaveRunSceneView.swift */; };
@@ -61,6 +63,7 @@
 
 /* Begin PBXFileReference section */
 		02CB584859EB84346CDE793C /* CaveExplorerTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "CaveExplorerTests-Info.plist"; sourceTree = "<group>"; };
+		19CC00FA34CF263728C39EEF /* CaveSoundEventTrackerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveSoundEventTrackerTests.swift; sourceTree = "<group>"; };
 		4E0E2E6F15E3AEB0775D6499 /* CaveAtmosphereFrameBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveAtmosphereFrameBuilder.swift; sourceTree = "<group>"; };
 		5477ED75CE98699F3653DF10 /* CaveAtmosphereFrameBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveAtmosphereFrameBuilderTests.swift; sourceTree = "<group>"; };
 		5564F17E7F41C5514EE5636F /* CaveExplorer-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "CaveExplorer-Info.plist"; sourceTree = "<group>"; };
@@ -74,6 +77,7 @@
 		96A98B7283F038B121296DFA /* CaveGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveGame.swift; sourceTree = "<group>"; };
 		99531419DFC3EDFE7D260D96 /* CaveGameSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveGameSettingsTests.swift; sourceTree = "<group>"; };
 		B96F08E6F4ABF03DFD54FD01 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		D80F6A1D1DC5892E31D97723 /* CaveAudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveAudio.swift; sourceTree = "<group>"; };
 		E653130A1C8FFE0015E859E9 /* CaveModules */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CaveModules; path = Packages/CaveModules; sourceTree = "<group>"; };
 		F2F42C678824F4A3BEECCD19 /* CaveTunnelFrameBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveTunnelFrameBuilderTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -160,6 +164,7 @@
 				5477ED75CE98699F3653DF10 /* CaveAtmosphereFrameBuilderTests.swift */,
 				8CF1EBA46CD0A7FE473D50B0 /* CaveExplorerTests.swift */,
 				99531419DFC3EDFE7D260D96 /* CaveGameSettingsTests.swift */,
+				19CC00FA34CF263728C39EEF /* CaveSoundEventTrackerTests.swift */,
 				F2F42C678824F4A3BEECCD19 /* CaveTunnelFrameBuilderTests.swift */,
 			);
 			path = Tests;
@@ -178,6 +183,7 @@
 			isa = PBXGroup;
 			children = (
 				4E0E2E6F15E3AEB0775D6499 /* CaveAtmosphereFrameBuilder.swift */,
+				D80F6A1D1DC5892E31D97723 /* CaveAudio.swift */,
 				83F3D7A97A58D3F00E4FA7F9 /* CaveExplorerApp.swift */,
 				96A98B7283F038B121296DFA /* CaveGame.swift */,
 				5615DF4CBA4DE53980BF604D /* CaveGameSettings.swift */,
@@ -299,6 +305,7 @@
 				D959049C34E19BB5532715FD /* CaveAtmosphereFrameBuilderTests.swift in Sources */,
 				56BC2BC94B7BD0CF3D0C73B3 /* CaveExplorerTests.swift in Sources */,
 				2F07FCF8035CB8B73026CC62 /* CaveGameSettingsTests.swift in Sources */,
+				DDAC17FAEB9C2D137BC21EC2 /* CaveSoundEventTrackerTests.swift in Sources */,
 				39752B3B2856FEFDFE0C3571 /* CaveTunnelFrameBuilderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -308,6 +315,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE0E937495CD51E180E743A1 /* CaveAtmosphereFrameBuilder.swift in Sources */,
+				7472F85D5C72AB99269C550F /* CaveAudio.swift in Sources */,
 				8BF891738CCCC006B90E8E7A /* CaveExplorerApp.swift in Sources */,
 				F321A458137974CCB3E8AAFB /* CaveGame.swift in Sources */,
 				5992872546ADB20FCF95E55D /* CaveGameSettings.swift in Sources */,
