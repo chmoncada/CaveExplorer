@@ -5,7 +5,7 @@ public struct ContentView: View {
 	@State private var session = CaveSession(
 		config: CaveConfig(
 			maxDepth: 5,
-			decisionTime: 3.0,
+			decisionTime: 5.0,
 			happyEndingStartPercent: 0.8
 		)
 	)

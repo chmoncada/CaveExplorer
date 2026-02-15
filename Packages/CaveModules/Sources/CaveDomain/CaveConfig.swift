@@ -10,7 +10,7 @@ public struct CaveConfig: Equatable, Sendable {
 
 	public init(
 		maxDepth: Int = 5,
-		decisionTime: TimeInterval = 3.0,
+		decisionTime: TimeInterval = 5.0,
 		minBranchOptions: Int = 2,
 		maxBranchOptions: Int = 3,
 		happyEndingStartPercent: Double = 0.8,
