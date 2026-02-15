@@ -58,6 +58,16 @@ protocol CaveBackgroundMusicPlaying: AnyObject {
 	func startLoop()
 	func stop()
 	func setMusicVolume(_ volume: Float)
+	func setMixMultiplier(_ multiplier: Float)
+	func setMuted(_ isMuted: Bool)
+}
+
+@MainActor
+protocol CaveAmbientLayerPlaying: AnyObject {
+	func startLoop()
+	func stop()
+	func setAmbientVolume(_ volume: Float)
+	func setMixMultiplier(_ multiplier: Float)
 	func setMuted(_ isMuted: Bool)
 }
 
@@ -130,6 +140,7 @@ final class CaveBackgroundMusicPlayer: CaveBackgroundMusicPlaying {
 	private let bundle: Bundle
 	private var player: AVAudioPlayer?
 	private var musicVolume = Float(CaveAudioSettings.default.musicVolume)
+	private var mixMultiplier: Float = 1
 	private var isMuted = CaveAudioSettings.default.isMuted
 
 	init(bundle: Bundle = .main) {
@@ -149,6 +160,11 @@ final class CaveBackgroundMusicPlayer: CaveBackgroundMusicPlaying {
 
 	func setMusicVolume(_ volume: Float) {
 		musicVolume = min(1, max(0, volume))
+		updatePlayerVolume()
+	}
+
+	func setMixMultiplier(_ multiplier: Float) {
+		mixMultiplier = min(1, max(0, multiplier))
 		updatePlayerVolume()
 	}
 
@@ -179,11 +195,84 @@ final class CaveBackgroundMusicPlayer: CaveBackgroundMusicPlaying {
 	}
 
 	private var effectiveMusicVolume: Float {
-		isMuted ? 0 : musicVolume
+		isMuted ? 0 : musicVolume * mixMultiplier
 	}
 
 	private func updatePlayerVolume() {
-		player?.volume = effectiveMusicVolume
+		player?.setVolume(effectiveMusicVolume, fadeDuration: 0.24)
+	}
+
+	private func resourceURL(fileName: String) -> URL? {
+		bundle.url(forResource: fileName, withExtension: "wav", subdirectory: "Audio")
+			?? bundle.url(forResource: fileName, withExtension: "wav")
+	}
+}
+
+@MainActor
+final class CaveAmbientLayerPlayer: CaveAmbientLayerPlaying {
+	private let bundle: Bundle
+	private var player: AVAudioPlayer?
+	private var ambientVolume = Float(CaveAudioSettings.default.musicVolume) * 0.55
+	private var mixMultiplier: Float = 1
+	private var isMuted = CaveAudioSettings.default.isMuted
+
+	init(bundle: Bundle = .main) {
+		self.bundle = bundle
+	}
+
+	func startLoop() {
+		guard let player = loadPlayerIfNeeded() else { return }
+		guard !player.isPlaying else { return }
+		player.currentTime = 0
+		player.play()
+	}
+
+	func stop() {
+		player?.stop()
+	}
+
+	func setAmbientVolume(_ volume: Float) {
+		ambientVolume = min(1, max(0, volume))
+		updatePlayerVolume()
+	}
+
+	func setMixMultiplier(_ multiplier: Float) {
+		mixMultiplier = min(1, max(0, multiplier))
+		updatePlayerVolume()
+	}
+
+	func setMuted(_ isMuted: Bool) {
+		self.isMuted = isMuted
+		updatePlayerVolume()
+	}
+
+	private func loadPlayerIfNeeded() -> AVAudioPlayer? {
+		if let player {
+			return player
+		}
+
+		guard let url = resourceURL(fileName: "bg_ambient_loop") else {
+			return nil
+		}
+
+		do {
+			let loadedPlayer = try AVAudioPlayer(contentsOf: url)
+			loadedPlayer.numberOfLoops = -1
+			loadedPlayer.volume = effectiveAmbientVolume
+			loadedPlayer.prepareToPlay()
+			player = loadedPlayer
+			return loadedPlayer
+		} catch {
+			return nil
+		}
+	}
+
+	private var effectiveAmbientVolume: Float {
+		isMuted ? 0 : ambientVolume * mixMultiplier
+	}
+
+	private func updatePlayerVolume() {
+		player?.setVolume(effectiveAmbientVolume, fadeDuration: 0.3)
 	}
 
 	private func resourceURL(fileName: String) -> URL? {
@@ -264,21 +353,32 @@ struct CaveSoundEventTracker {
 
 @MainActor
 final class CaveSoundController {
+	private enum MixProfile {
+		static let ambientBaseGain: Float = 0.55
+	}
+
 	private let player: any CaveSoundPlaying
 	private let backgroundMusicPlayer: any CaveBackgroundMusicPlaying
+	private let ambientPlayer: any CaveAmbientLayerPlaying
 	private var tracker: CaveSoundEventTracker
 
 	convenience init() {
-		self.init(player: CaveBundleSoundPlayer(), backgroundMusicPlayer: CaveBackgroundMusicPlayer())
+		self.init(
+			player: CaveBundleSoundPlayer(),
+			backgroundMusicPlayer: CaveBackgroundMusicPlayer(),
+			ambientPlayer: CaveAmbientLayerPlayer()
+		)
 	}
 
 	init(
 		player: any CaveSoundPlaying,
 		backgroundMusicPlayer: any CaveBackgroundMusicPlaying,
+		ambientPlayer: any CaveAmbientLayerPlaying,
 		tracker: CaveSoundEventTracker = CaveSoundEventTracker()
 	) {
 		self.player = player
 		self.backgroundMusicPlayer = backgroundMusicPlayer
+		self.ambientPlayer = ambientPlayer
 		self.tracker = tracker
 	}
 
@@ -286,13 +386,18 @@ final class CaveSoundController {
 		let normalized = settings.normalized
 		player.setEffectsVolume(Float(normalized.effectsVolume))
 		player.setMuted(normalized.isMuted)
+
 		backgroundMusicPlayer.setMusicVolume(Float(normalized.musicVolume))
 		backgroundMusicPlayer.setMuted(normalized.isMuted)
+
+		ambientPlayer.setAmbientVolume(Float(normalized.musicVolume) * MixProfile.ambientBaseGain)
+		ambientPlayer.setMuted(normalized.isMuted)
 	}
 
 	func startRun(initialState: CaveRunState?) {
 		tracker.reset()
 		backgroundMusicPlayer.startLoop()
+		ambientPlayer.startLoop()
 		player.play(cue: .runStarted)
 		handle(runState: initialState)
 	}
@@ -310,8 +415,11 @@ final class CaveSoundController {
 		switch runState.phase {
 		case .traveling, .waitingForChoice:
 			backgroundMusicPlayer.startLoop()
+			ambientPlayer.startLoop()
+			applyMix(for: runState.phase)
 		case .ended:
 			backgroundMusicPlayer.stop()
+			ambientPlayer.stop()
 		}
 
 		let cues = tracker.cues(for: runState)
@@ -323,5 +431,32 @@ final class CaveSoundController {
 	func stopAll() {
 		tracker.reset()
 		backgroundMusicPlayer.stop()
+		ambientPlayer.stop()
+	}
+
+	private func applyMix(for phase: CaveRunPhase) {
+		switch phase {
+		case .traveling:
+			backgroundMusicPlayer.setMixMultiplier(1)
+			ambientPlayer.setMixMultiplier(0.78)
+		case .waitingForChoice(let decision):
+			let remainingRatio = normalizedRatio(
+				remaining: decision.remainingTime,
+				total: decision.totalTime
+			)
+			let musicMix = Float(0.58 + 0.34 * remainingRatio)
+			let ambientMix = Float(0.36 + 0.24 * remainingRatio)
+			backgroundMusicPlayer.setMixMultiplier(musicMix)
+			ambientPlayer.setMixMultiplier(ambientMix)
+		case .ended:
+			backgroundMusicPlayer.setMixMultiplier(0)
+			ambientPlayer.setMixMultiplier(0)
+		}
+	}
+
+	private func normalizedRatio(remaining: TimeInterval, total: TimeInterval) -> Double {
+		guard total > 0 else { return 0 }
+		let raw = remaining / total
+		return min(1, max(0, raw))
 	}
 }

@@ -46,20 +46,28 @@ final class CaveSoundControllerTests: XCTestCase {
 	func test_startRun_playsRunStartedInitialCueAndStartsMusicLoop() {
 		let spyPlayer = SpySoundPlayer()
 		let spyMusicPlayer = SpyBackgroundMusicPlayer()
-		let controller = CaveSoundController(player: spyPlayer, backgroundMusicPlayer: spyMusicPlayer)
+		let spyAmbientPlayer = SpyAmbientPlayer()
+		let controller = CaveSoundController(
+			player: spyPlayer,
+			backgroundMusicPlayer: spyMusicPlayer,
+			ambientPlayer: spyAmbientPlayer
+		)
 
 		controller.startRun(initialState: waitingState(nodeID: 1, remaining: 5, total: 5))
 
 		XCTAssertEqual(spyPlayer.playedCues, [.runStarted, .decisionAppeared])
 		XCTAssertEqual(spyMusicPlayer.startCalls, 2)
+		XCTAssertEqual(spyAmbientPlayer.startCalls, 2)
 		XCTAssertEqual(spyMusicPlayer.stopCalls, 0)
+		XCTAssertEqual(spyAmbientPlayer.stopCalls, 0)
 	}
 
 	func test_choosePath_playsPathSelectedCue() {
 		let spyPlayer = SpySoundPlayer()
 		let controller = CaveSoundController(
 			player: spyPlayer,
-			backgroundMusicPlayer: SpyBackgroundMusicPlayer()
+			backgroundMusicPlayer: SpyBackgroundMusicPlayer(),
+			ambientPlayer: SpyAmbientPlayer()
 		)
 
 		controller.choosePath()
@@ -70,25 +78,71 @@ final class CaveSoundControllerTests: XCTestCase {
 	func test_handle_withEndedState_stopsMusicAndPlaysEndingCue() {
 		let spyPlayer = SpySoundPlayer()
 		let spyMusicPlayer = SpyBackgroundMusicPlayer()
-		let controller = CaveSoundController(player: spyPlayer, backgroundMusicPlayer: spyMusicPlayer)
+		let spyAmbientPlayer = SpyAmbientPlayer()
+		let controller = CaveSoundController(
+			player: spyPlayer,
+			backgroundMusicPlayer: spyMusicPlayer,
+			ambientPlayer: spyAmbientPlayer
+		)
 
 		controller.handle(runState: endedState(.monsterAttack))
 
 		XCTAssertEqual(spyPlayer.playedCues, [.failureEnding])
 		XCTAssertEqual(spyMusicPlayer.startCalls, 0)
+		XCTAssertEqual(spyAmbientPlayer.startCalls, 0)
 		XCTAssertEqual(spyMusicPlayer.stopCalls, 1)
+		XCTAssertEqual(spyAmbientPlayer.stopCalls, 1)
+	}
+
+	func test_handle_traveling_appliesTravelMixProfile() {
+		let spyMusicPlayer = SpyBackgroundMusicPlayer()
+		let spyAmbientPlayer = SpyAmbientPlayer()
+		let controller = CaveSoundController(
+			player: SpySoundPlayer(),
+			backgroundMusicPlayer: spyMusicPlayer,
+			ambientPlayer: spyAmbientPlayer
+		)
+
+		controller.handle(runState: travelingState())
+
+		XCTAssertEqual(spyMusicPlayer.latestMixMultiplier, 1, accuracy: 0.0001)
+		XCTAssertEqual(spyAmbientPlayer.latestMixMultiplier, 0.78, accuracy: 0.0001)
+	}
+
+	func test_handle_waitingForChoice_updatesMixWithRemainingTime() {
+		let spyMusicPlayer = SpyBackgroundMusicPlayer()
+		let spyAmbientPlayer = SpyAmbientPlayer()
+		let controller = CaveSoundController(
+			player: SpySoundPlayer(),
+			backgroundMusicPlayer: spyMusicPlayer,
+			ambientPlayer: spyAmbientPlayer
+		)
+
+		controller.handle(runState: waitingState(nodeID: 4, remaining: 5, total: 5))
+		XCTAssertEqual(spyMusicPlayer.latestMixMultiplier, 0.92, accuracy: 0.0001)
+		XCTAssertEqual(spyAmbientPlayer.latestMixMultiplier, 0.6, accuracy: 0.0001)
+
+		controller.handle(runState: waitingState(nodeID: 4, remaining: 0, total: 5))
+		XCTAssertEqual(spyMusicPlayer.latestMixMultiplier, 0.58, accuracy: 0.0001)
+		XCTAssertEqual(spyAmbientPlayer.latestMixMultiplier, 0.36, accuracy: 0.0001)
 	}
 
 	func test_stopAll_resetsTrackerAndStopsMusic() {
 		let spyPlayer = SpySoundPlayer()
 		let spyMusicPlayer = SpyBackgroundMusicPlayer()
-		let controller = CaveSoundController(player: spyPlayer, backgroundMusicPlayer: spyMusicPlayer)
+		let spyAmbientPlayer = SpyAmbientPlayer()
+		let controller = CaveSoundController(
+			player: spyPlayer,
+			backgroundMusicPlayer: spyMusicPlayer,
+			ambientPlayer: spyAmbientPlayer
+		)
 
 		controller.startRun(initialState: waitingState(nodeID: 3, remaining: 5, total: 5))
 		controller.stopAll()
 		controller.handle(runState: waitingState(nodeID: 3, remaining: 5, total: 5))
 
 		XCTAssertEqual(spyMusicPlayer.stopCalls, 1)
+		XCTAssertEqual(spyAmbientPlayer.stopCalls, 1)
 		XCTAssertEqual(
 			spyPlayer.playedCues,
 			[.runStarted, .decisionAppeared, .decisionAppeared]
@@ -98,7 +152,12 @@ final class CaveSoundControllerTests: XCTestCase {
 	func test_applySettings_updatesPlayers() {
 		let spyPlayer = SpySoundPlayer()
 		let spyMusicPlayer = SpyBackgroundMusicPlayer()
-		let controller = CaveSoundController(player: spyPlayer, backgroundMusicPlayer: spyMusicPlayer)
+		let spyAmbientPlayer = SpyAmbientPlayer()
+		let controller = CaveSoundController(
+			player: spyPlayer,
+			backgroundMusicPlayer: spyMusicPlayer,
+			ambientPlayer: spyAmbientPlayer
+		)
 
 		controller.apply(settings: CaveAudioSettings(effectsVolume: 0.42, musicVolume: 0.18, isMuted: true))
 
@@ -106,6 +165,8 @@ final class CaveSoundControllerTests: XCTestCase {
 		XCTAssertTrue(spyPlayer.latestMutedState)
 		XCTAssertEqual(spyMusicPlayer.latestMusicVolume, 0.18, accuracy: 0.0001)
 		XCTAssertTrue(spyMusicPlayer.latestMutedState)
+		XCTAssertEqual(spyAmbientPlayer.latestAmbientVolume, 0.099, accuracy: 0.0001)
+		XCTAssertTrue(spyAmbientPlayer.latestMutedState)
 	}
 
 	private final class SpySoundPlayer: CaveSoundPlaying {
@@ -130,6 +191,7 @@ final class CaveSoundControllerTests: XCTestCase {
 		private(set) var startCalls = 0
 		private(set) var stopCalls = 0
 		private(set) var latestMusicVolume: Float = 1
+		private(set) var latestMixMultiplier: Float = 1
 		private(set) var latestMutedState = false
 
 		func startLoop() {
@@ -142,6 +204,38 @@ final class CaveSoundControllerTests: XCTestCase {
 
 		func setMusicVolume(_ volume: Float) {
 			latestMusicVolume = volume
+		}
+
+		func setMixMultiplier(_ multiplier: Float) {
+			latestMixMultiplier = multiplier
+		}
+
+		func setMuted(_ isMuted: Bool) {
+			latestMutedState = isMuted
+		}
+	}
+
+	private final class SpyAmbientPlayer: CaveAmbientLayerPlaying {
+		private(set) var startCalls = 0
+		private(set) var stopCalls = 0
+		private(set) var latestAmbientVolume: Float = 1
+		private(set) var latestMixMultiplier: Float = 1
+		private(set) var latestMutedState = false
+
+		func startLoop() {
+			startCalls += 1
+		}
+
+		func stop() {
+			stopCalls += 1
+		}
+
+		func setAmbientVolume(_ volume: Float) {
+			latestAmbientVolume = volume
+		}
+
+		func setMixMultiplier(_ multiplier: Float) {
+			latestMixMultiplier = multiplier
 		}
 
 		func setMuted(_ isMuted: Bool) {
