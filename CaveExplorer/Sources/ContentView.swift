@@ -5,6 +5,8 @@ public struct ContentView: View {
 	@State private var settings = CaveGameSettings.default
 	@State private var session = CaveSession(config: CaveGameSettings.default.caveConfig)
 	@State private var torchPulse = 0.0
+	@State private var gameFlow: GameFlow = .home
+	@State private var presentedSheet: PresentedSheet?
 
 	private let tunnelBuilder = CaveTunnelFrameBuilder(segmentCount: 11)
 	private let atmosphereBuilder = CaveAtmosphereFrameBuilder(fogBandCount: 4, dustCount: 36, batCount: 3)
@@ -14,44 +16,49 @@ public struct ContentView: View {
 			CaveRunSceneView(
 				tunnelBuilder: tunnelBuilder,
 				atmosphereBuilder: atmosphereBuilder,
-				travelProgress: session.travelProgress ?? 0,
-				depthProgress: session.depthProgress,
-				decisionRemainingRatio: session.decisionRemainingRatio,
-				decisionChoiceCount: session.choices.count,
-				isGameOver: session.isGameOver,
+				travelProgress: sceneTravelProgress,
+				depthProgress: sceneDepthProgress,
+				decisionRemainingRatio: sceneDecisionRemainingRatio,
+				decisionChoiceCount: sceneChoiceCount,
+				isGameOver: sceneIsGameOver,
 				torchPulse: torchPulse
 			)
 
-			VStack(spacing: 14) {
-				TopHUDView(
-					currentDepth: session.currentDepth,
-					maxDepth: session.maxDepth,
-					title: session.titleText,
-					subtitle: session.subtitleText,
-					depthProgress: session.depthProgress
+			if gameFlow == .playing {
+				GameplayOverlayView(
+					session: session,
+					onChoose: { optionIndex in
+						session.choose(optionIndex: optionIndex)
+					},
+					onNewMap: {
+						startRun()
+					},
+					onReturnHome: {
+						returnHome()
+					}
 				)
-
-				Spacer()
-
-				if let decisionRatio = session.decisionRemainingRatio {
-					DecisionTimerView(remainingRatio: decisionRatio)
-				}
-
-				ChoicePanelView(choices: session.choices) { optionIndex in
-					session.choose(optionIndex: optionIndex)
-				}
-
-				SettingsPanelView(settings: $settings) {
-					session.applySettings(settings)
-				}
-
-				BottomActionBar(isGameOver: session.isGameOver) {
-					session.applySettings(settings)
-				}
+				.padding(22)
+			} else {
+				StartMenuOverlayView(
+					settings: settings,
+					onStart: {
+						startRun()
+					},
+					onOpenSettings: {
+						presentedSheet = .settings
+					}
+				)
 			}
-			.padding(22)
 		}
 		.frame(minWidth: 960, minHeight: 640)
+		.sheet(item: $presentedSheet) { sheet in
+			switch sheet {
+			case .settings:
+				SettingsSheetView(settings: $settings) {
+					presentedSheet = nil
+				}
+			}
+		}
 		.task {
 			await runGameLoop()
 		}
@@ -60,12 +67,47 @@ public struct ContentView: View {
 		}
 	}
 
+	private var sceneTravelProgress: Double {
+		guard gameFlow == .playing else { return 0.28 }
+		return session.travelProgress ?? 0
+	}
+
+	private var sceneDepthProgress: Double {
+		guard gameFlow == .playing else { return 0.0 }
+		return session.depthProgress
+	}
+
+	private var sceneDecisionRemainingRatio: Double? {
+		guard gameFlow == .playing else { return nil }
+		return session.decisionRemainingRatio
+	}
+
+	private var sceneChoiceCount: Int {
+		guard gameFlow == .playing else { return 0 }
+		return session.choices.count
+	}
+
+	private var sceneIsGameOver: Bool {
+		gameFlow == .playing && session.isGameOver
+	}
+
+	private func startRun() {
+		session = CaveSession(config: settings.caveConfig)
+		gameFlow = .playing
+	}
+
+	private func returnHome() {
+		gameFlow = .home
+	}
+
 	private func runGameLoop() async {
 		let frameDuration = Duration.milliseconds(50)
 		let fixedDelta = 0.05
 
 		while !Task.isCancelled {
-			session.tick(deltaTime: fixedDelta)
+			if gameFlow == .playing {
+				session.tick(deltaTime: fixedDelta)
+			}
 			try? await Task.sleep(for: frameDuration)
 		}
 	}
@@ -77,6 +119,131 @@ public struct ContentView: View {
 			}
 			try? await Task.sleep(for: .milliseconds(350))
 		}
+	}
+}
+
+private enum GameFlow {
+	case home
+	case playing
+}
+
+private enum PresentedSheet: String, Identifiable {
+	case settings
+
+	var id: String {
+		rawValue
+	}
+}
+
+private struct GameplayOverlayView: View {
+	let session: CaveSession
+	let onChoose: (Int) -> Void
+	let onNewMap: () -> Void
+	let onReturnHome: () -> Void
+
+	var body: some View {
+		VStack(spacing: 14) {
+			TopHUDView(
+				currentDepth: session.currentDepth,
+				maxDepth: session.maxDepth,
+				title: session.titleText,
+				subtitle: session.subtitleText,
+				depthProgress: session.depthProgress
+			)
+
+			Spacer()
+
+			if let decisionRatio = session.decisionRemainingRatio {
+				DecisionTimerView(remainingRatio: decisionRatio)
+			}
+
+			ChoicePanelView(choices: session.choices) { optionIndex in
+				onChoose(optionIndex)
+			}
+
+			BottomActionBar(
+				isGameOver: session.isGameOver,
+				onNewMap: onNewMap,
+				onReturnHome: onReturnHome
+			)
+		}
+	}
+}
+
+private struct StartMenuOverlayView: View {
+	let settings: CaveGameSettings
+	let onStart: () -> Void
+	let onOpenSettings: () -> Void
+
+	private var settingsSummary: String {
+		"Ajustes activos: profundidad \(settings.maxDepth), "
+			+ "decision \(settings.decisionTime.formatted(.number.precision(.fractionLength(1))))s"
+	}
+
+	var body: some View {
+		VStack {
+			Spacer()
+
+			VStack(alignment: .leading, spacing: 16) {
+				Text("Cave Explorer")
+					.font(.system(size: 46, weight: .black, design: .rounded))
+					.foregroundStyle(.white)
+
+				Text("Explora la cueva antes de que la oscuridad te alcance.")
+					.font(.title3)
+					.foregroundStyle(.white.opacity(0.92))
+
+				Text(settingsSummary)
+					.font(.subheadline)
+					.foregroundStyle(.white.opacity(0.82))
+
+				HStack(spacing: 10) {
+					Button("Iniciar expedicion", systemImage: "play.fill") {
+						onStart()
+					}
+					.buttonStyle(.borderedProminent)
+					.controlSize(.large)
+
+					Button("Ajustes", systemImage: "slider.horizontal.3") {
+						onOpenSettings()
+					}
+					.buttonStyle(.bordered)
+					.controlSize(.large)
+				}
+			}
+			.frame(maxWidth: 540, alignment: .leading)
+			.padding(24)
+			.background(.black.opacity(0.44), in: .rect(cornerRadius: 18))
+			.overlay {
+				RoundedRectangle(cornerRadius: 18)
+					.stroke(.white.opacity(0.18), lineWidth: 1)
+			}
+
+			Spacer()
+		}
+		.padding(22)
+	}
+}
+
+private struct SettingsSheetView: View {
+	@Binding var settings: CaveGameSettings
+	let onClose: () -> Void
+
+	var body: some View {
+		VStack(spacing: 16) {
+			SettingsPanelView(settings: $settings)
+
+			HStack {
+				Spacer()
+
+				Button("Cerrar") {
+					onClose()
+				}
+				.buttonStyle(.borderedProminent)
+			}
+		}
+		.padding(20)
+		.frame(minWidth: 480)
 	}
 }
 
@@ -190,7 +357,6 @@ private struct ChoicePanelView: View {
 
 private struct SettingsPanelView: View {
 	@Binding var settings: CaveGameSettings
-	let onApply: () -> Void
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 10) {
@@ -233,11 +399,6 @@ private struct SettingsPanelView: View {
 					step: 0.05
 				)
 			}
-
-			Button("Aplicar ajustes") {
-				onApply()
-			}
-			.buttonStyle(.borderedProminent)
 		}
 		.frame(maxWidth: 540, alignment: .leading)
 		.padding(12)
@@ -252,6 +413,7 @@ private struct SettingsPanelView: View {
 private struct BottomActionBar: View {
 	let isGameOver: Bool
 	let onNewMap: () -> Void
+	let onReturnHome: () -> Void
 
 	var body: some View {
 		HStack {
@@ -260,7 +422,12 @@ private struct BottomActionBar: View {
 
 			Spacer()
 
-			Button(isGameOver ? "Jugar con ajustes" : "Nuevo mapa") {
+			Button("Inicio") {
+				onReturnHome()
+			}
+			.buttonStyle(.bordered)
+
+			Button(isGameOver ? "Reintentar" : "Nuevo mapa") {
 				onNewMap()
 			}
 			.buttonStyle(.borderedProminent)
