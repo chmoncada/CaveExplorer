@@ -1,125 +1,169 @@
-import Combine
-import CoreGraphics
+import CaveDomain
+import CaveGameplay
+import CaveMapEngine
 import Foundation
+import Observation
 
 @MainActor
-final class CaveGame: ObservableObject {
-	struct Pipe: Identifiable {
-		let id = UUID()
-		var x: CGFloat
-		var gapCenterY: CGFloat
-		var scored = false
+@Observable
+final class CaveSession {
+	struct Choice: Identifiable, Equatable {
+		let optionIndex: Int
+		let title: String
+
+		var id: Int { optionIndex }
 	}
 
-	let worldSize = CGSize(width: 900, height: 640)
-	let birdX: CGFloat = 220
-	let birdRadius: CGFloat = 16
-	let pipeWidth: CGFloat = 70
-	let gapHeight: CGFloat = 180
-	let gravity: CGFloat = 1100
-	let flapImpulse: CGFloat = -380
-	let scrollSpeed: CGFloat = 220
-	let pipeSpacing: CGFloat = 280
+	private let generator: CaveMapGenerator
+	private let baseConfig: CaveConfig
 
-	@Published private(set) var birdY: CGFloat = 0
-	@Published private(set) var velocity: CGFloat = 0
-	@Published private(set) var score = 0
-	@Published private(set) var hasStarted = false
-	@Published private(set) var isGameOver = false
-	@Published private(set) var pipes: [Pipe] = []
+	private var activeConfig: CaveConfig
+	private var runEngine: CaveRunEngine?
+	private var mapGraph: CaveMapGraph?
 
-	init() {
-		reset()
+	private(set) var runState: CaveRunState?
+	private(set) var choices: [Choice] = []
+
+	init(
+		config: CaveConfig = CaveConfig(),
+		generator: CaveMapGenerator = CaveMapGenerator()
+	) {
+		self.baseConfig = config
+		self.activeConfig = config
+		self.generator = generator
+
+		startNewGame(seed: config.randomSeed)
 	}
 
-	func reset() {
-		birdY = worldSize.height * 0.5
-		velocity = 0
-		score = 0
-		hasStarted = false
-		isGameOver = false
+	var maxDepth: Int {
+		activeConfig.maxDepth
+	}
 
-		let startX = worldSize.width + 140
-		pipes = (0..<4).map { index in
-			Pipe(
-				x: startX + (CGFloat(index) * pipeSpacing),
-				gapCenterY: randomGapCenterY(),
-				scored: false
-			)
+	var currentDepth: Int {
+		runState?.currentDepth ?? 0
+	}
+
+	var depthProgress: Double {
+		guard maxDepth > 0 else { return 0 }
+		return min(1, max(0, Double(currentDepth) / Double(maxDepth)))
+	}
+
+	var travelProgress: Double? {
+		guard case .traveling(let travel) = runState?.phase else { return nil }
+		return travel.progress
+	}
+
+	var decisionRemainingRatio: Double? {
+		guard case .waitingForChoice(let decision) = runState?.phase, decision.totalTime > 0 else {
+			return nil
+		}
+		return min(1, max(0, decision.remainingTime / decision.totalTime))
+	}
+
+	var titleText: String {
+		guard let runState else { return "Preparando expedicion..." }
+
+		switch runState.phase {
+		case .traveling:
+			return "Avanzando por el tunel"
+		case .waitingForChoice:
+			return "Encrucijada"
+		case .ended(let outcome):
+			return outcome.screenTitle
 		}
 	}
 
-	func flap() {
-		if isGameOver {
-			reset()
-			hasStarted = true
-		} else if !hasStarted {
-			hasStarted = true
+	var subtitleText: String {
+		guard let runState else { return "Generando nuevo mapa..." }
+
+		switch runState.phase {
+		case .traveling:
+			return "La antorcha apenas ilumina el camino."
+		case .waitingForChoice:
+			return "Elige una entrada antes de que te alcance el monstruo."
+		case .ended(let outcome):
+			return outcome.screenSubtitle
 		}
-
-		velocity = flapImpulse
 	}
 
-	func update(deltaTime: TimeInterval) {
-		guard hasStarted, !isGameOver else { return }
-
-		let dt = CGFloat(deltaTime)
-		velocity += gravity * dt
-		birdY += velocity * dt
-
-		for index in pipes.indices {
-			pipes[index].x -= scrollSpeed * dt
-
-			if !pipes[index].scored && (pipes[index].x + pipeWidth * 0.5) < birdX {
-				pipes[index].scored = true
-				score += 1
-			}
-
-			if pipes[index].x < -pipeWidth {
-				let maxX = pipes.map(\.x).max() ?? worldSize.width
-				pipes[index].x = maxX + pipeSpacing
-				pipes[index].gapCenterY = randomGapCenterY()
-				pipes[index].scored = false
-			}
-		}
-
-		checkCollisions()
+	var isGameOver: Bool {
+		guard case .ended = runState?.phase else { return false }
+		return true
 	}
 
-	private func randomGapCenterY() -> CGFloat {
-		CGFloat.random(in: 130...(worldSize.height - 130))
+	func startNewGame(seed: UInt64? = nil) {
+		var nextConfig = baseConfig
+		nextConfig.randomSeed = seed
+		activeConfig = nextConfig
+
+		let graph = generator.generate(config: nextConfig)
+		mapGraph = graph
+
+		let engine = CaveRunEngine(graph: graph, config: nextConfig)
+		apply(engine: engine)
 	}
 
-	private func checkCollisions() {
-		let birdRect = CGRect(
-			x: birdX - birdRadius,
-			y: birdY - birdRadius,
-			width: birdRadius * 2,
-			height: birdRadius * 2
-		)
+	func tick(deltaTime: TimeInterval) {
+		guard var engine = runEngine else { return }
+		engine.tick(deltaTime: deltaTime)
+		apply(engine: engine)
+	}
 
-		if birdRect.minY <= 0 || birdRect.maxY >= worldSize.height {
-			isGameOver = true
+	func choose(optionIndex: Int) {
+		guard var engine = runEngine else { return }
+		guard engine.choose(optionIndex: optionIndex) else { return }
+		apply(engine: engine)
+	}
+
+	private func apply(engine: CaveRunEngine) {
+		runEngine = engine
+		runState = engine.state
+		refreshChoices()
+	}
+
+	private func refreshChoices() {
+		guard
+			case .waitingForChoice(let decision) = runState?.phase,
+			let node = mapGraph?.nodes[decision.nodeID]
+		else {
+			choices = []
 			return
 		}
 
-		for pipe in pipes {
-			let gapTop = pipe.gapCenterY - gapHeight * 0.5
-			let gapBottom = pipe.gapCenterY + gapHeight * 0.5
-			let xStart = pipe.x - pipeWidth * 0.5
+		choices = node.childNodeIDs.indices.map { index in
+			Choice(optionIndex: index, title: "Entrada \(index + 1)")
+		}
+	}
+}
 
-			let topRect = CGRect(x: xStart, y: 0, width: pipeWidth, height: gapTop)
-			let bottomRect = CGRect(
-				x: xStart,
-				y: gapBottom,
-				width: pipeWidth,
-				height: worldSize.height - gapBottom
-			)
+extension CaveOutcome {
+	fileprivate var screenTitle: String {
+		switch self {
+		case .lostInDarkness:
+			return "Te perdiste en la oscuridad"
+		case .monsterAttack:
+			return "El monstruo te alcanzo"
+		case .fatalFall:
+			return "Caida al precipicio"
+		case .cursedTreasure:
+			return "Trampa mortal"
+		case .escapeTreasurePortal:
+			return "Tesoro encontrado"
+		}
+	}
 
-			if topRect.intersects(birdRect) || bottomRect.intersects(birdRect) {
-				isGameOver = true
-				return
-			}
+	fileprivate var screenSubtitle: String {
+		switch self {
+		case .lostInDarkness:
+			return "La antorcha se apago y no encontraste salida."
+		case .monsterAttack:
+			return "Dudaste demasiado en la encrucijada."
+		case .fatalFall:
+			return "Un paso falso fue suficiente para caer."
+		case .cursedTreasure:
+			return "El tesoro estaba protegido por una trampa."
+		case .escapeTreasurePortal:
+			return "Conseguiste el portal y escapaste de la cueva."
 		}
 	}
 }
