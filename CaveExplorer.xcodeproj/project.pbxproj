@@ -280,6 +280,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.charlesmoncada.caveExplorerTests;
 				PRODUCT_NAME = CaveExplorerTests;
 				SDKROOT = macosx;
@@ -419,6 +420,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.charlesmoncada.caveExplorer;
 				PRODUCT_NAME = CaveExplorer;
 				SDKROOT = macosx;
@@ -440,6 +442,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.charlesmoncada.caveExplorer;
 				PRODUCT_NAME = CaveExplorer;
 				SDKROOT = macosx;
@@ -464,6 +467,7 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.charlesmoncada.caveExplorerTests;
 				PRODUCT_NAME = CaveExplorerTests;
 				SDKROOT = macosx;
