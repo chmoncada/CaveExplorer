@@ -8,9 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		1CCDF0B33FEE90DADFD25F18 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B96F08E6F4ABF03DFD54FD01 /* ContentView.swift */; };
+		39752B3B2856FEFDFE0C3571 /* CaveTunnelFrameBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2F42C678824F4A3BEECCD19 /* CaveTunnelFrameBuilderTests.swift */; };
 		457583B19AEFAD123539F36A /* CaveDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 428B93720C8B5D5E8FC9190C /* CaveDomain */; };
 		4DE60168CB1E4779A5D265A7 /* CaveMapEngine in Frameworks */ = {isa = PBXBuildFile; productRef = E1B8F15A3F0592575E4EB013 /* CaveMapEngine */; };
 		56BC2BC94B7BD0CF3D0C73B3 /* CaveExplorerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CF1EBA46CD0A7FE473D50B0 /* CaveExplorerTests.swift */; };
+		8817277057B75F1C90A8B7A3 /* CaveTunnelFrameBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64722F8272DD9DCE8E5E8341 /* CaveTunnelFrameBuilder.swift */; };
 		8BF891738CCCC006B90E8E7A /* CaveExplorerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83F3D7A97A58D3F00E4FA7F9 /* CaveExplorerApp.swift */; };
 		8F6AFDD20F9057A1B2B29560 /* CaveGameplay in Frameworks */ = {isa = PBXBuildFile; productRef = D0642C5EC26683EBA14977B2 /* CaveGameplay */; };
 		DD0E48D53AA236E16202C43F /* CaveDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 6C7FD0BCC3148DD0F0345999 /* CaveDomain */; };
@@ -55,6 +57,7 @@
 /* Begin PBXFileReference section */
 		02CB584859EB84346CDE793C /* CaveExplorerTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "CaveExplorerTests-Info.plist"; sourceTree = "<group>"; };
 		5564F17E7F41C5514EE5636F /* CaveExplorer-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "CaveExplorer-Info.plist"; sourceTree = "<group>"; };
+		64722F8272DD9DCE8E5E8341 /* CaveTunnelFrameBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveTunnelFrameBuilder.swift; sourceTree = "<group>"; };
 		6F90A8F0AE2DF36F3C38D96C /* CaveExplorer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CaveExplorer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		83F3D7A97A58D3F00E4FA7F9 /* CaveExplorerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveExplorerApp.swift; sourceTree = "<group>"; };
 		8CF1EBA46CD0A7FE473D50B0 /* CaveExplorerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveExplorerTests.swift; sourceTree = "<group>"; };
@@ -62,6 +65,7 @@
 		96A98B7283F038B121296DFA /* CaveGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveGame.swift; sourceTree = "<group>"; };
 		B96F08E6F4ABF03DFD54FD01 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E653130A1C8FFE0015E859E9 /* CaveModules */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CaveModules; path = Packages/CaveModules; sourceTree = "<group>"; };
+		F2F42C678824F4A3BEECCD19 /* CaveTunnelFrameBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaveTunnelFrameBuilderTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +148,7 @@
 			isa = PBXGroup;
 			children = (
 				8CF1EBA46CD0A7FE473D50B0 /* CaveExplorerTests.swift */,
+				F2F42C678824F4A3BEECCD19 /* CaveTunnelFrameBuilderTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -162,6 +167,7 @@
 			children = (
 				83F3D7A97A58D3F00E4FA7F9 /* CaveExplorerApp.swift */,
 				96A98B7283F038B121296DFA /* CaveGame.swift */,
+				64722F8272DD9DCE8E5E8341 /* CaveTunnelFrameBuilder.swift */,
 				B96F08E6F4ABF03DFD54FD01 /* ContentView.swift */,
 			);
 			path = Sources;
@@ -276,6 +282,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				56BC2BC94B7BD0CF3D0C73B3 /* CaveExplorerTests.swift in Sources */,
+				39752B3B2856FEFDFE0C3571 /* CaveTunnelFrameBuilderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -285,6 +292,7 @@
 			files = (
 				8BF891738CCCC006B90E8E7A /* CaveExplorerApp.swift in Sources */,
 				F321A458137974CCB3E8AAFB /* CaveGame.swift in Sources */,
+				8817277057B75F1C90A8B7A3 /* CaveTunnelFrameBuilder.swift in Sources */,
 				1CCDF0B33FEE90DADFD25F18 /* ContentView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

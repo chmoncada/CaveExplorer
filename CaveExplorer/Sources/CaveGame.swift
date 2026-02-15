@@ -131,7 +131,25 @@ final class CaveSession {
 		}
 
 		choices = node.childNodeIDs.indices.map { index in
-			Choice(optionIndex: index, title: "Entrada \(index + 1)")
+			Choice(optionIndex: index, title: choiceTitle(for: index, total: node.childNodeIDs.count))
+		}
+	}
+
+	private func choiceTitle(for index: Int, total: Int) -> String {
+		switch total {
+		case 2:
+			return index == 0 ? "Izquierda" : "Derecha"
+		case 3:
+			switch index {
+			case 0:
+				return "Izquierda"
+			case 1:
+				return "Centro"
+			default:
+				return "Derecha"
+			}
+		default:
+			return "Entrada \(index + 1)"
 		}
 	}
 }
