@@ -2,6 +2,12 @@ import ProjectDescription
 
 let project = Project(
     name: "CaveExplorer",
+    packages: [
+        .remote(
+            url: "https://github.com/SimplyDanny/SwiftLintPlugins",
+            requirement: .upToNextMajor(from: "0.57.1")
+        )
+    ],
     targets: [
         .target(
             name: "CaveExplorer",
@@ -12,7 +18,9 @@ let project = Project(
             infoPlist: .default,
             sources: ["CaveExplorer/Sources/**"],
             resources: [],
-            dependencies: []
+            dependencies: [
+                .package(product: "SwiftLintBuildToolPlugin", type: .plugin)
+            ]
         ),
         .target(
             name: "CaveExplorerTests",

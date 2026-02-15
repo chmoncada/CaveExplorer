@@ -160,6 +160,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				203C3C62A36C01AD6F06A5E0 /* PBXTargetDependency */,
 			);
 			name = CaveExplorer;
 			packageProductDependencies = (
@@ -211,6 +212,9 @@
 				en,
 			);
 			mainGroup = 235C7028BE045F679C17C0FB;
+			packageReferences = (
+				7A57E42B7E2EA76D178EF94F /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */,
+			);
 			productRefGroup = D257B3F62DD0BFE1212DBABE /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -260,6 +264,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		203C3C62A36C01AD6F06A5E0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 8877B75EC953BAE9634D8B7B /* SwiftLintBuildToolPlugin */;
+		};
 		331531D60852AC63F2F105E7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = CaveExplorer;
@@ -510,6 +518,24 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7A57E42B7E2EA76D178EF94F /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SimplyDanny/SwiftLintPlugins";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.57.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		8877B75EC953BAE9634D8B7B /* SwiftLintBuildToolPlugin */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = "plugin:SwiftLintBuildToolPlugin";
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = CB6E86D230C7EC68F44FA686 /* Project object */;
 }

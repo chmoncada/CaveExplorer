@@ -1,0 +1,27 @@
+included:
+  - CaveExplorer/Sources
+  - CaveExplorer/Tests
+
+excluded:
+  - Derived
+  - Tuist
+  - CaveExplorer.xcodeproj
+  - CaveExplorer.xcworkspace
+  - Tools/.build
+
+disabled_rules:
+  - identifier_name
+
+line_length:
+  warning: 120
+  error: 160
+  ignores_comments: true
+  ignores_urls: true
+
+type_body_length:
+  warning: 300
+  error: 500
+
+file_length:
+  warning: 500
+  error: 800
