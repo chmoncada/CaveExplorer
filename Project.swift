@@ -1,27 +1,27 @@
 import ProjectDescription
 
 let project = Project(
-    name: "FlappyBird",
+    name: "CaveExplorer",
     targets: [
         .target(
-            name: "FlappyBird",
+            name: "CaveExplorer",
             destinations: .macOS,
             product: .app,
-            bundleId: "io.tuist.FlappyBird",
+            bundleId: "com.charlesmoncada.caveExplorer",
             infoPlist: .default,
-            sources: ["FlappyBird/Sources/**"],
+            sources: ["CaveExplorer/Sources/**"],
             resources: [],
             dependencies: []
         ),
         .target(
-            name: "FlappyBirdTests",
+            name: "CaveExplorerTests",
             destinations: .macOS,
             product: .unitTests,
-            bundleId: "io.tuist.FlappyBirdTests",
+            bundleId: "com.charlesmoncada.caveExplorerTests",
             infoPlist: .default,
-            sources: ["FlappyBird/Tests/**"],
+            sources: ["CaveExplorer/Tests/**"],
             resources: [],
-            dependencies: [.target(name: "FlappyBird")]
+            dependencies: [.target(name: "CaveExplorer")]
         ),
     ]
 )

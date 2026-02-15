@@ -3,7 +3,7 @@ import CoreGraphics
 import Foundation
 
 @MainActor
-final class FlappyGame: ObservableObject {
+final class CaveGame: ObservableObject {
     struct Pipe: Identifiable {
         let id = UUID()
         var x: CGFloat

@@ -14,24 +14,10 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "B75771C3387EFF65114E343E"
-               BuildableName = "FlappyBird.app"
-               BlueprintName = "FlappyBird"
-               ReferencedContainer = "container:FlappyBird.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
-         <BuildActionEntry
-            buildForTesting = "YES"
-            buildForRunning = "YES"
-            buildForProfiling = "YES"
-            buildForArchiving = "YES"
-            buildForAnalyzing = "YES">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "7C4B08450CFD487D62E2F2C2"
-               BuildableName = "FlappyBirdTests.xctest"
-               BlueprintName = "FlappyBirdTests"
-               ReferencedContainer = "container:FlappyBird.xcodeproj">
+               BlueprintIdentifier = "5533A2F924ECE3D70CEB670F"
+               BuildableName = "CaveExplorer.app"
+               BlueprintName = "CaveExplorer"
+               ReferencedContainer = "container:CaveExplorer.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -46,10 +32,10 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "7C4B08450CFD487D62E2F2C2"
-               BuildableName = "FlappyBirdTests.xctest"
-               BlueprintName = "FlappyBirdTests"
-               ReferencedContainer = "container:FlappyBird.xcodeproj">
+               BlueprintIdentifier = "DDBD928D7FE21BD2B041D886"
+               BuildableName = "CaveExplorerTests.xctest"
+               BlueprintName = "CaveExplorerTests"
+               ReferencedContainer = "container:CaveExplorer.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -68,10 +54,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B75771C3387EFF65114E343E"
-            BuildableName = "FlappyBird.app"
-            BlueprintName = "FlappyBird"
-            ReferencedContainer = "container:FlappyBird.xcodeproj">
+            BlueprintIdentifier = "5533A2F924ECE3D70CEB670F"
+            BuildableName = "CaveExplorer.app"
+            BlueprintName = "CaveExplorer"
+            ReferencedContainer = "container:CaveExplorer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -85,10 +71,10 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "B75771C3387EFF65114E343E"
-            BuildableName = "FlappyBird.app"
-            BlueprintName = "FlappyBird"
-            ReferencedContainer = "container:FlappyBird.xcodeproj">
+            BlueprintIdentifier = "5533A2F924ECE3D70CEB670F"
+            BuildableName = "CaveExplorer.app"
+            BlueprintName = "CaveExplorer"
+            ReferencedContainer = "container:CaveExplorer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

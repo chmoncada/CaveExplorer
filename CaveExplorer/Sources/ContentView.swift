@@ -2,7 +2,7 @@ import Combine
 import SwiftUI
 
 public struct ContentView: View {
-    @StateObject private var game = FlappyGame()
+    @StateObject private var game = CaveGame()
     @State private var lastTick = Date()
     private let timer = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
 
@@ -82,7 +82,7 @@ public struct ContentView: View {
 }
 
 private struct PipeView: View {
-    let pipe: FlappyGame.Pipe
+    let pipe: CaveGame.Pipe
     let worldSize: CGSize
     let pipeWidth: CGFloat
     let gapHeight: CGFloat
