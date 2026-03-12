@@ -4,6 +4,7 @@ struct CavePreferencesSnapshot: Equatable {
 	var gameSettings: CaveGameSettings
 	var audioSettings: CaveAudioSettings
 	var runStats: CaveRunStats
+	var recentRuns: [CaveRunRecord]
 	var hasSeenOnboarding: Bool
 }
 
@@ -17,6 +18,7 @@ struct CavePreferencesStore {
 		static let isMuted = "cave.audio.isMuted"
 		static let bestDepth = "cave.stats.bestDepth"
 		static let escapedRuns = "cave.stats.escapedRuns"
+		static let recentRunsData = "cave.stats.recentRunsData"
 		static let hasSeenOnboarding = "cave.ui.hasSeenOnboarding"
 	}
 
@@ -24,6 +26,7 @@ struct CavePreferencesStore {
 	var saveGameSettings: (CaveGameSettings) -> Void
 	var saveAudioSettings: (CaveAudioSettings) -> Void
 	var saveRunStats: (CaveRunStats) -> Void
+	var saveRecentRuns: ([CaveRunRecord]) -> Void
 	var saveHasSeenOnboarding: (Bool) -> Void
 
 	static let live = userDefaults()
@@ -59,11 +62,13 @@ struct CavePreferencesStore {
 				).normalized
 
 				let hasSeenOnboarding = defaults.object(forKey: Keys.hasSeenOnboarding) as? Bool ?? false
+				let recentRuns = loadRecentRuns(from: defaults)
 
 				return CavePreferencesSnapshot(
 					gameSettings: storedGameSettings,
 					audioSettings: storedAudioSettings,
 					runStats: storedRunStats,
+					recentRuns: recentRuns,
 					hasSeenOnboarding: hasSeenOnboarding
 				)
 			},
@@ -84,9 +89,24 @@ struct CavePreferencesStore {
 				defaults.set(normalized.bestDepth, forKey: Keys.bestDepth)
 				defaults.set(normalized.escapedRuns, forKey: Keys.escapedRuns)
 			},
+			saveRecentRuns: { recentRuns in
+				saveRecentRuns(recentRuns, into: defaults)
+			},
 			saveHasSeenOnboarding: { hasSeenOnboarding in
 				defaults.set(hasSeenOnboarding, forKey: Keys.hasSeenOnboarding)
 			}
 		)
+	}
+
+	private static func loadRecentRuns(from defaults: UserDefaults) -> [CaveRunRecord] {
+		guard let data = defaults.data(forKey: Keys.recentRunsData) else { return [] }
+		guard let runs = try? JSONDecoder().decode([CaveRunRecord].self, from: data) else { return [] }
+		return Array(runs.prefix(5))
+	}
+
+	private static func saveRecentRuns(_ recentRuns: [CaveRunRecord], into defaults: UserDefaults) {
+		let cappedRuns = Array(recentRuns.prefix(5))
+		guard let encoded = try? JSONEncoder().encode(cappedRuns) else { return }
+		defaults.set(encoded, forKey: Keys.recentRunsData)
 	}
 }

@@ -76,6 +76,9 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
 - Se añadió onboarding breve en home con micro-guía de flujo y controles básicos.
 - El onboarding puede ocultarse con "Entendido" y su estado queda persistido para no volver a mostrarlo en próximos inicios.
 - Se cubrió la persistencia del flag de onboarding con tests del store de preferencias.
+- Se amplió el resumen de fin de run con tiempo estimado, seed usada y cantidad de decisiones tomadas.
+- Se agregó persistencia de historial corto de runs recientes y visualización del historial en home.
+- Se añadieron tests para líneas extendidas del resumen y para persistencia/recorte del historial reciente.
 
 ## Aprendizajes hasta ahora
 - Separar dominio (SPM) de la app (SwiftUI) facilitó probar la lógica sin depender de UI ni audio real.
@@ -97,4 +100,4 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
    - `xcodebuild test -project CaveExplorer.xcodeproj -scheme CaveExplorer -destination 'platform=macOS'`
 
 ## Próximo bloque sugerido
-- Añadir pantalla de resumen extendida al finalizar (tiempo total estimado + seed + decisiones tomadas) y persistir un historial corto de runs recientes.
+- Separar `ContentView` en archivos por componentes (home, gameplay, cards) para reducir tamaño del archivo y eliminar warnings de longitud en SwiftLint.

@@ -161,6 +161,39 @@ final class CaveExplorerTests: XCTestCase {
 		XCTAssertEqual(updated.escapedRuns, 2)
 	}
 
+	func test_runSummary_exposesEstimatedDurationSeedAndDecisionLines() {
+		let summary = CaveRunSummary(
+			outcome: .escapeTreasurePortal,
+			reachedDepth: 9,
+			maxDepth: 10,
+			estimatedDuration: 15.4,
+			seed: 42,
+			decisionsTaken: 5
+		)
+
+		XCTAssertTrue(summary.estimatedDurationLine.hasPrefix("Tiempo estimado: 15"))
+		XCTAssertTrue(summary.estimatedDurationLine.hasSuffix("s"))
+		XCTAssertEqual(summary.seedLine, "Seed: 42")
+		XCTAssertEqual(summary.decisionsLine, "Decisiones tomadas: 5")
+	}
+
+	func test_runRecord_appending_keepsMostRecentEntriesWithinLimit() {
+		let existing = [
+			CaveRunRecord(summary: CaveRunSummary(outcome: .monsterAttack, reachedDepth: 2, maxDepth: 10)),
+			CaveRunRecord(summary: CaveRunSummary(outcome: .fatalFall, reachedDepth: 3, maxDepth: 10)),
+			CaveRunRecord(summary: CaveRunSummary(outcome: .cursedTreasure, reachedDepth: 4, maxDepth: 10))
+		]
+
+		let updated = CaveRunRecord.appending(
+			summary: CaveRunSummary(outcome: .escapeTreasurePortal, reachedDepth: 8, maxDepth: 10),
+			to: existing,
+			limit: 3
+		)
+
+		XCTAssertEqual(updated.count, 3)
+		XCTAssertEqual(updated.first?.outcomeTitle, "Tesoro encontrado")
+	}
+
 	private func makeSession() -> CaveSession {
 		CaveSession(
 			config: CaveConfig(

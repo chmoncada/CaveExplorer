@@ -7,6 +7,7 @@ struct ContentView: View {
 	@State private var selectedPreset: CaveGamePreset?
 	@State private var session: CaveSession
 	@State private var runStats: CaveRunStats
+	@State private var recentRuns: [CaveRunRecord]
 	@State private var lastRecordedRunSummary: CaveRunSummary?
 	@State private var showOnboarding: Bool
 	@State private var torchPulse = 0.0
@@ -26,6 +27,7 @@ struct ContentView: View {
 		_selectedPreset = State(initialValue: CaveGamePreset.matching(settings: snapshot.gameSettings))
 		_session = State(initialValue: CaveSession(config: snapshot.gameSettings.caveConfig))
 		_runStats = State(initialValue: snapshot.runStats)
+		_recentRuns = State(initialValue: snapshot.recentRuns)
 		_lastRecordedRunSummary = State(initialValue: nil)
 		_showOnboarding = State(initialValue: !snapshot.hasSeenOnboarding)
 	}
@@ -62,6 +64,7 @@ struct ContentView: View {
 				StartMenuOverlayView(
 					settings: settings,
 					runStats: runStats,
+					recentRuns: recentRuns,
 					showOnboarding: showOnboarding,
 					selectedPreset: selectedPreset,
 					onSelectPreset: { preset in
@@ -164,7 +167,9 @@ struct ContentView: View {
 
 				if let summary = session.runSummary, summary != lastRecordedRunSummary {
 					runStats = runStats.recording(summary)
+					recentRuns = CaveRunRecord.appending(summary: summary, to: recentRuns)
 					preferencesStore.saveRunStats(runStats)
+					preferencesStore.saveRecentRuns(recentRuns)
 					lastRecordedRunSummary = summary
 				}
 			}
@@ -254,6 +259,18 @@ private struct RunSummaryCardView: View {
 			Text(summary.depthLine)
 				.font(.subheadline.monospacedDigit())
 				.foregroundStyle(.white.opacity(0.85))
+
+			Text(summary.estimatedDurationLine)
+				.font(.footnote.monospacedDigit())
+				.foregroundStyle(.white.opacity(0.8))
+
+			Text(summary.decisionsLine)
+				.font(.footnote.monospacedDigit())
+				.foregroundStyle(.white.opacity(0.8))
+
+			Text(summary.seedLine)
+				.font(.footnote.monospacedDigit())
+				.foregroundStyle(.white.opacity(0.8))
 		}
 		.frame(maxWidth: 540, alignment: .leading)
 		.padding(14)
@@ -268,6 +285,7 @@ private struct RunSummaryCardView: View {
 private struct StartMenuOverlayView: View {
 	let settings: CaveGameSettings
 	let runStats: CaveRunStats
+	let recentRuns: [CaveRunRecord]
 	let showOnboarding: Bool
 	let selectedPreset: CaveGamePreset?
 	let onSelectPreset: (CaveGamePreset) -> Void
@@ -311,6 +329,10 @@ private struct StartMenuOverlayView: View {
 					.font(.footnote.monospacedDigit())
 					.foregroundStyle(.white.opacity(0.78))
 
+				if !recentRuns.isEmpty {
+					RecentRunsPanelView(recentRuns: recentRuns)
+				}
+
 				if showOnboarding {
 					OnboardingCardView(onClose: {
 						onDismissOnboarding()
@@ -342,6 +364,36 @@ private struct StartMenuOverlayView: View {
 			Spacer()
 		}
 		.padding(22)
+	}
+}
+
+private struct RecentRunsPanelView: View {
+	let recentRuns: [CaveRunRecord]
+
+	var body: some View {
+		VStack(alignment: .leading, spacing: 6) {
+			Text("Runs recientes")
+				.font(.headline)
+				.foregroundStyle(.white)
+
+			ForEach(recentRuns.prefix(3)) { run in
+				VStack(alignment: .leading, spacing: 2) {
+					Text("\(run.outcomeTitle) - \(run.progressPercent)%")
+						.font(.subheadline)
+						.foregroundStyle(.white.opacity(0.9))
+
+					Text("\(run.durationLine) - \(run.seedLine)")
+						.font(.footnote.monospacedDigit())
+						.foregroundStyle(.white.opacity(0.75))
+				}
+			}
+		}
+		.padding(12)
+		.background(.black.opacity(0.3), in: .rect(cornerRadius: 12))
+		.overlay {
+			RoundedRectangle(cornerRadius: 12)
+				.stroke(.white.opacity(0.16), lineWidth: 1)
+		}
 	}
 }
 

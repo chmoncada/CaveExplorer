@@ -12,6 +12,7 @@ final class CavePreferencesStoreTests: XCTestCase {
 		XCTAssertEqual(snapshot.gameSettings, CaveGameSettings.default)
 		XCTAssertEqual(snapshot.audioSettings, CaveAudioSettings.default)
 		XCTAssertEqual(snapshot.runStats, .empty)
+		XCTAssertTrue(snapshot.recentRuns.isEmpty)
 		XCTAssertFalse(snapshot.hasSeenOnboarding)
 	}
 
@@ -40,6 +41,7 @@ final class CavePreferencesStoreTests: XCTestCase {
 		XCTAssertEqual(snapshot.audioSettings.musicVolume, 0, accuracy: 0.001)
 		XCTAssertTrue(snapshot.audioSettings.isMuted)
 		XCTAssertEqual(snapshot.runStats, .empty)
+		XCTAssertTrue(snapshot.recentRuns.isEmpty)
 		XCTAssertFalse(snapshot.hasSeenOnboarding)
 	}
 
@@ -62,6 +64,10 @@ final class CavePreferencesStoreTests: XCTestCase {
 			)
 		)
 		store.saveRunStats(CaveRunStats(bestDepth: -4, escapedRuns: 6))
+		store.saveRecentRuns([
+			CaveRunRecord(summary: CaveRunSummary(outcome: .escapeTreasurePortal, reachedDepth: 8, maxDepth: 10, estimatedDuration: 12.3, seed: 77, decisionsTaken: 3)),
+			CaveRunRecord(summary: CaveRunSummary(outcome: .monsterAttack, reachedDepth: 4, maxDepth: 10, estimatedDuration: 5.2, seed: nil, decisionsTaken: 1))
+		])
 		store.saveHasSeenOnboarding(true)
 
 		let snapshot = store.load()
@@ -78,6 +84,8 @@ final class CavePreferencesStoreTests: XCTestCase {
 		XCTAssertTrue(snapshot.audioSettings.isMuted)
 		XCTAssertEqual(snapshot.runStats.bestDepth, 0)
 		XCTAssertEqual(snapshot.runStats.escapedRuns, 6)
+		XCTAssertEqual(snapshot.recentRuns.count, 2)
+		XCTAssertEqual(snapshot.recentRuns.first?.seed, 77)
 		XCTAssertTrue(snapshot.hasSeenOnboarding)
 	}
 

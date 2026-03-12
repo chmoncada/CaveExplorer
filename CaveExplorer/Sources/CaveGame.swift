@@ -20,6 +20,8 @@ final class CaveSession {
 	private var activeConfig: CaveConfig
 	private var runEngine: CaveRunEngine?
 	private var mapGraph: CaveMapGraph?
+	private var elapsedRunTime: TimeInterval = 0
+	private var decisionsTaken = 0
 
 	private(set) var runState: CaveRunState?
 	private(set) var choices: [Choice] = []
@@ -93,7 +95,14 @@ final class CaveSession {
 
 	var runSummary: CaveRunSummary? {
 		guard case .ended(let outcome) = runState?.phase else { return nil }
-		return CaveRunSummary(outcome: outcome, reachedDepth: currentDepth, maxDepth: maxDepth)
+		return CaveRunSummary(
+			outcome: outcome,
+			reachedDepth: currentDepth,
+			maxDepth: maxDepth,
+			estimatedDuration: elapsedRunTime,
+			seed: activeConfig.randomSeed,
+			decisionsTaken: decisionsTaken
+		)
 	}
 
 	func applySettings(_ settings: CaveGameSettings) {
@@ -106,6 +115,8 @@ final class CaveSession {
 		var nextConfig = baseConfig
 		nextConfig.randomSeed = seed
 		activeConfig = nextConfig
+		elapsedRunTime = 0
+		decisionsTaken = 0
 
 		let graph = generator.generate(config: nextConfig)
 		mapGraph = graph
@@ -116,6 +127,12 @@ final class CaveSession {
 
 	func tick(deltaTime: TimeInterval) {
 		guard var engine = runEngine else { return }
+		guard case .ended = runState?.phase else {
+			elapsedRunTime += max(0, deltaTime)
+			engine.tick(deltaTime: deltaTime)
+			apply(engine: engine)
+			return
+		}
 		engine.tick(deltaTime: deltaTime)
 		apply(engine: engine)
 	}
@@ -123,6 +140,7 @@ final class CaveSession {
 	func choose(optionIndex: Int) {
 		guard var engine = runEngine else { return }
 		guard engine.choose(optionIndex: optionIndex) else { return }
+		decisionsTaken += 1
 		apply(engine: engine)
 	}
 
@@ -169,6 +187,25 @@ struct CaveRunSummary: Equatable {
 	let outcome: CaveOutcome
 	let reachedDepth: Int
 	let maxDepth: Int
+	let estimatedDuration: TimeInterval
+	let seed: UInt64?
+	let decisionsTaken: Int
+
+	init(
+		outcome: CaveOutcome,
+		reachedDepth: Int,
+		maxDepth: Int,
+		estimatedDuration: TimeInterval = 0,
+		seed: UInt64? = nil,
+		decisionsTaken: Int = 0
+	) {
+		self.outcome = outcome
+		self.reachedDepth = reachedDepth
+		self.maxDepth = maxDepth
+		self.estimatedDuration = estimatedDuration
+		self.seed = seed
+		self.decisionsTaken = decisionsTaken
+	}
 
 	var isSuccessful: Bool {
 		outcome == .escapeTreasurePortal
@@ -199,6 +236,22 @@ struct CaveRunSummary: Equatable {
 	var outcomeSubtitle: String {
 		outcome.screenSubtitle
 	}
+
+	var estimatedDurationLine: String {
+		let seconds = estimatedDuration.formatted(.number.precision(.fractionLength(1)))
+		return "Tiempo estimado: \(seconds)s"
+	}
+
+	var seedLine: String {
+		if let seed {
+			return "Seed: \(seed)"
+		}
+		return "Seed: aleatoria"
+	}
+
+	var decisionsLine: String {
+		"Decisiones tomadas: \(decisionsTaken)"
+	}
 }
 
 struct CaveRunStats: Equatable {
@@ -217,6 +270,49 @@ struct CaveRunStats: Equatable {
 			bestDepth: max(current.bestDepth, summary.reachedDepth),
 			escapedRuns: current.escapedRuns + (summary.isSuccessful ? 1 : 0)
 		).normalized
+	}
+}
+
+struct CaveRunRecord: Codable, Equatable, Identifiable {
+	let id: UUID
+	let endedAt: Date
+	let outcomeTitle: String
+	let reachedDepth: Int
+	let maxDepth: Int
+	let progressPercent: Int
+	let estimatedDuration: TimeInterval
+	let decisionsTaken: Int
+	let seed: UInt64?
+	let isSuccessful: Bool
+
+	init(summary: CaveRunSummary, endedAt: Date = .now) {
+		self.id = UUID()
+		self.endedAt = endedAt
+		self.outcomeTitle = summary.outcomeTitle
+		self.reachedDepth = summary.reachedDepth
+		self.maxDepth = summary.maxDepth
+		self.progressPercent = summary.progressPercent
+		self.estimatedDuration = summary.estimatedDuration
+		self.decisionsTaken = summary.decisionsTaken
+		self.seed = summary.seed
+		self.isSuccessful = summary.isSuccessful
+	}
+
+	var durationLine: String {
+		let seconds = estimatedDuration.formatted(.number.precision(.fractionLength(1)))
+		return "\(seconds)s | \(decisionsTaken) decisiones"
+	}
+
+	var seedLine: String {
+		if let seed {
+			return "Seed \(seed)"
+		}
+		return "Seed aleatoria"
+	}
+
+	static func appending(summary: CaveRunSummary, to records: [CaveRunRecord], limit: Int = 5) -> [CaveRunRecord] {
+		let next = CaveRunRecord(summary: summary)
+		return Array(([next] + records).prefix(max(1, limit)))
 	}
 }
 
