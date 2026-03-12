@@ -91,6 +91,11 @@ final class CaveSession {
 		return true
 	}
 
+	var runSummary: CaveRunSummary? {
+		guard case .ended(let outcome) = runState?.phase else { return nil }
+		return CaveRunSummary(outcome: outcome, reachedDepth: currentDepth, maxDepth: maxDepth)
+	}
+
 	func applySettings(_ settings: CaveGameSettings) {
 		let config = settings.caveConfig
 		baseConfig = config
@@ -157,6 +162,42 @@ final class CaveSession {
 		default:
 			return "Entrada \(index + 1)"
 		}
+	}
+}
+
+struct CaveRunSummary: Equatable {
+	let outcome: CaveOutcome
+	let reachedDepth: Int
+	let maxDepth: Int
+
+	var isSuccessful: Bool {
+		outcome == .escapeTreasurePortal
+	}
+
+	var progressRatio: Double {
+		guard maxDepth > 0 else { return 0 }
+		let ratio = Double(reachedDepth) / Double(maxDepth)
+		return min(1, max(0, ratio))
+	}
+
+	var progressPercent: Int {
+		Int((progressRatio * 100).rounded())
+	}
+
+	var headline: String {
+		isSuccessful ? "Escapaste de la cueva" : "La expedicion termino"
+	}
+
+	var depthLine: String {
+		"Profundidad alcanzada: \(reachedDepth) / \(maxDepth) (\(progressPercent)%)"
+	}
+
+	var outcomeTitle: String {
+		outcome.screenTitle
+	}
+
+	var outcomeSubtitle: String {
+		outcome.screenSubtitle
 	}
 }
 

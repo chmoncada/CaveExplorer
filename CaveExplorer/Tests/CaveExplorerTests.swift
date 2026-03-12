@@ -124,6 +124,23 @@ final class CaveExplorerTests: XCTestCase {
 		}
 	}
 
+	func test_runSummary_marksEscapeOutcomeAsSuccess() {
+		let summary = CaveRunSummary(outcome: .escapeTreasurePortal, reachedDepth: 8, maxDepth: 10)
+
+		XCTAssertTrue(summary.isSuccessful)
+		XCTAssertEqual(summary.headline, "Escapaste de la cueva")
+		XCTAssertEqual(summary.progressPercent, 80)
+	}
+
+	func test_runSummary_clampsProgressPercentWithinBounds() {
+		let belowRange = CaveRunSummary(outcome: .fatalFall, reachedDepth: -2, maxDepth: 10)
+		let aboveRange = CaveRunSummary(outcome: .monsterAttack, reachedDepth: 14, maxDepth: 10)
+
+		XCTAssertEqual(belowRange.progressPercent, 0)
+		XCTAssertEqual(aboveRange.progressPercent, 100)
+		XCTAssertEqual(aboveRange.depthLine, "Profundidad alcanzada: 14 / 10 (100%)")
+	}
+
 	private func makeSession() -> CaveSession {
 		CaveSession(
 			config: CaveConfig(

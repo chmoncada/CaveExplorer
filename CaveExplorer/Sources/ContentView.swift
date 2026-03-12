@@ -1,18 +1,28 @@
 import CaveDomain
 import SwiftUI
 
-public struct ContentView: View {
-	@State private var settings = CaveGameSettings.default
-	@State private var audioSettings = CaveAudioSettings.default
-	@State private var selectedPreset: CaveGamePreset? = .classic
-	@State private var session = CaveSession(config: CaveGameSettings.default.caveConfig)
+struct ContentView: View {
+	@State private var settings: CaveGameSettings
+	@State private var audioSettings: CaveAudioSettings
+	@State private var selectedPreset: CaveGamePreset?
+	@State private var session: CaveSession
 	@State private var torchPulse = 0.0
 	@State private var gameFlow: GameFlow = .home
 	@State private var presentedSheet: PresentedSheet?
 	@State private var soundController = CaveSoundController()
+	private let preferencesStore: CavePreferencesStore
 
 	private let tunnelBuilder = CaveTunnelFrameBuilder(segmentCount: 11)
 	private let atmosphereBuilder = CaveAtmosphereFrameBuilder(fogBandCount: 4, dustCount: 36, batCount: 3)
+
+	init(preferencesStore: CavePreferencesStore = .live) {
+		self.preferencesStore = preferencesStore
+		let snapshot = preferencesStore.load()
+		_settings = State(initialValue: snapshot.gameSettings)
+		_audioSettings = State(initialValue: snapshot.audioSettings)
+		_selectedPreset = State(initialValue: CaveGamePreset.matching(settings: snapshot.gameSettings))
+		_session = State(initialValue: CaveSession(config: snapshot.gameSettings.caveConfig))
+	}
 
 	public var body: some View {
 		ZStack {
@@ -85,7 +95,12 @@ public struct ContentView: View {
 			soundController.apply(settings: audioSettings)
 		}
 		.onChange(of: audioSettings) { _, updatedAudioSettings in
+			preferencesStore.saveAudioSettings(updatedAudioSettings)
 			soundController.apply(settings: updatedAudioSettings)
+		}
+		.onChange(of: settings) { _, updatedSettings in
+			preferencesStore.saveGameSettings(updatedSettings)
+			selectedPreset = CaveGamePreset.matching(settings: updatedSettings)
 		}
 	}
 
@@ -183,6 +198,10 @@ private struct GameplayOverlayView: View {
 				DecisionTimerView(remainingRatio: decisionRatio)
 			}
 
+			if let summary = session.runSummary {
+				RunSummaryCardView(summary: summary)
+			}
+
 			ChoicePanelView(choices: session.choices) { optionIndex in
 				onChoose(optionIndex)
 			}
@@ -192,6 +211,37 @@ private struct GameplayOverlayView: View {
 				onNewMap: onNewMap,
 				onReturnHome: onReturnHome
 			)
+		}
+	}
+}
+
+private struct RunSummaryCardView: View {
+	let summary: CaveRunSummary
+
+	var body: some View {
+		VStack(alignment: .leading, spacing: 8) {
+			Text(summary.headline)
+				.font(.headline)
+				.foregroundStyle(summary.isSuccessful ? .green : .orange)
+
+			Text(summary.outcomeTitle)
+				.font(.title3.bold())
+				.foregroundStyle(.white)
+
+			Text(summary.outcomeSubtitle)
+				.font(.subheadline)
+				.foregroundStyle(.white.opacity(0.9))
+
+			Text(summary.depthLine)
+				.font(.subheadline.monospacedDigit())
+				.foregroundStyle(.white.opacity(0.85))
+		}
+		.frame(maxWidth: 540, alignment: .leading)
+		.padding(14)
+		.background(.black.opacity(0.36), in: .rect(cornerRadius: 14))
+		.overlay {
+			RoundedRectangle(cornerRadius: 14)
+				.stroke(.white.opacity(0.18), lineWidth: 1)
 		}
 	}
 }

@@ -56,8 +56,7 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
   - añadir sonidos posicionales/contextuales (opcional).
 - UX y producto:
   - onboarding breve para explicar controles,
-  - pantalla de resumen al terminar (causa de muerte / estadísticas de run),
-  - persistencia básica de preferencias y mejores runs.
+  - persistencia de mejores runs.
 - Testing:
   - más tests de integración entre sesión + UI state,
   - smoke tests de audio controller ante cambios rápidos de estado.
@@ -66,6 +65,12 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
 - Generador de mapa actualizado para usar una ventana de profundidad explícita del final feliz (`happyEndingDepthRange`).
 - El final feliz queda garantizado dentro del tramo configurado por `happyEndingStartPercent`.
 - Se añadieron tests dedicados en dominio y motor de mapa para validar rango, borde al 100% y consistencia en múltiples seeds.
+- Se implementó persistencia de preferencias con `UserDefaults` para settings de partida y audio.
+- La app ahora carga preferencias guardadas al iniciar y persiste cambios automáticamente al ajustar settings o audio.
+- Se añadieron tests unitarios del store de preferencias para defaults, normalización de valores fuera de rango y round-trip de guardado/carga.
+- Se añadió pantalla de resumen al finalizar cada run con outcome, mensaje descriptivo y progreso de profundidad alcanzada.
+- Se incorporó `CaveRunSummary` como capa de lógica de resumen para separar cómputo de métricas y presentación en UI.
+- Se agregaron tests de lógica del resumen para éxito/fracaso y límites de progreso.
 
 ## Aprendizajes hasta ahora
 - Separar dominio (SPM) de la app (SwiftUI) facilitó probar la lógica sin depender de UI ni audio real.
@@ -87,4 +92,4 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
    - `xcodebuild test -project CaveExplorer.xcodeproj -scheme CaveExplorer -destination 'platform=macOS'`
 
 ## Próximo bloque sugerido
-- Implementar persistencia básica de preferencias (settings de partida y audio), con tests de lectura/escritura y aplicación automática al iniciar la app.
+- Persistir mejores runs (profundidad máxima y cantidad de escapes), mostrarlas en home y cubrir la lógica con tests unitarios.
