@@ -141,6 +141,26 @@ final class CaveExplorerTests: XCTestCase {
 		XCTAssertEqual(aboveRange.depthLine, "Profundidad alcanzada: 14 / 10 (100%)")
 	}
 
+	func test_runStats_recordingFailure_updatesBestDepthOnly() {
+		let initial = CaveRunStats(bestDepth: 3, escapedRuns: 2)
+		let summary = CaveRunSummary(outcome: .monsterAttack, reachedDepth: 7, maxDepth: 10)
+
+		let updated = initial.recording(summary)
+
+		XCTAssertEqual(updated.bestDepth, 7)
+		XCTAssertEqual(updated.escapedRuns, 2)
+	}
+
+	func test_runStats_recordingSuccess_incrementsEscapesAndKeepsBestDepth() {
+		let initial = CaveRunStats(bestDepth: 9, escapedRuns: 1)
+		let summary = CaveRunSummary(outcome: .escapeTreasurePortal, reachedDepth: 6, maxDepth: 10)
+
+		let updated = initial.recording(summary)
+
+		XCTAssertEqual(updated.bestDepth, 9)
+		XCTAssertEqual(updated.escapedRuns, 2)
+	}
+
 	private func makeSession() -> CaveSession {
 		CaveSession(
 			config: CaveConfig(

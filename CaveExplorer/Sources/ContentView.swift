@@ -6,6 +6,8 @@ struct ContentView: View {
 	@State private var audioSettings: CaveAudioSettings
 	@State private var selectedPreset: CaveGamePreset?
 	@State private var session: CaveSession
+	@State private var runStats: CaveRunStats
+	@State private var lastRecordedRunSummary: CaveRunSummary?
 	@State private var torchPulse = 0.0
 	@State private var gameFlow: GameFlow = .home
 	@State private var presentedSheet: PresentedSheet?
@@ -22,6 +24,8 @@ struct ContentView: View {
 		_audioSettings = State(initialValue: snapshot.audioSettings)
 		_selectedPreset = State(initialValue: CaveGamePreset.matching(settings: snapshot.gameSettings))
 		_session = State(initialValue: CaveSession(config: snapshot.gameSettings.caveConfig))
+		_runStats = State(initialValue: snapshot.runStats)
+		_lastRecordedRunSummary = State(initialValue: nil)
 	}
 
 	public var body: some View {
@@ -55,6 +59,7 @@ struct ContentView: View {
 			} else {
 				StartMenuOverlayView(
 					settings: settings,
+					runStats: runStats,
 					selectedPreset: selectedPreset,
 					onSelectPreset: { preset in
 						selectedPreset = preset
@@ -130,6 +135,7 @@ struct ContentView: View {
 
 	private func startRun() {
 		session = CaveSession(config: settings.caveConfig)
+		lastRecordedRunSummary = nil
 		gameFlow = .playing
 		soundController.apply(settings: audioSettings)
 		soundController.startRun(initialState: session.runState)
@@ -148,6 +154,12 @@ struct ContentView: View {
 			if gameFlow == .playing {
 				session.tick(deltaTime: fixedDelta)
 				soundController.handle(runState: session.runState)
+
+				if let summary = session.runSummary, summary != lastRecordedRunSummary {
+					runStats = runStats.recording(summary)
+					preferencesStore.saveRunStats(runStats)
+					lastRecordedRunSummary = summary
+				}
 			}
 			try? await Task.sleep(for: frameDuration)
 		}
@@ -248,6 +260,7 @@ private struct RunSummaryCardView: View {
 
 private struct StartMenuOverlayView: View {
 	let settings: CaveGameSettings
+	let runStats: CaveRunStats
 	let selectedPreset: CaveGamePreset?
 	let onSelectPreset: (CaveGamePreset) -> Void
 	let onStart: () -> Void
@@ -257,6 +270,10 @@ private struct StartMenuOverlayView: View {
 		let presetName = selectedPreset?.title ?? "Personalizado"
 		let decision = settings.decisionTime.formatted(.number.precision(.fractionLength(1)))
 		return "Preset: \(presetName). Profundidad \(settings.maxDepth), decision \(decision)s"
+	}
+
+	private var progressSummary: String {
+		"Mejor profundidad: \(runStats.bestDepth) | Escapes: \(runStats.escapedRuns)"
 	}
 
 	var body: some View {
@@ -280,6 +297,10 @@ private struct StartMenuOverlayView: View {
 				Text(settingsSummary)
 					.font(.subheadline)
 					.foregroundStyle(.white.opacity(0.82))
+
+				Text(progressSummary)
+					.font(.footnote.monospacedDigit())
+					.foregroundStyle(.white.opacity(0.78))
 
 				HStack(spacing: 10) {
 					Button("Iniciar expedicion", systemImage: "play.fill") {

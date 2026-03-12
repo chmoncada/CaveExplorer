@@ -56,7 +56,7 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
   - añadir sonidos posicionales/contextuales (opcional).
 - UX y producto:
   - onboarding breve para explicar controles,
-  - persistencia de mejores runs.
+  - comparar runs por semilla o dificultad (opcional, para telemetría local).
 - Testing:
   - más tests de integración entre sesión + UI state,
   - smoke tests de audio controller ante cambios rápidos de estado.
@@ -71,6 +71,9 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
 - Se añadió pantalla de resumen al finalizar cada run con outcome, mensaje descriptivo y progreso de profundidad alcanzada.
 - Se incorporó `CaveRunSummary` como capa de lógica de resumen para separar cómputo de métricas y presentación en UI.
 - Se agregaron tests de lógica del resumen para éxito/fracaso y límites de progreso.
+- Se agregó persistencia de mejores runs (profundidad máxima y escapes acumulados) con guardado en `UserDefaults`.
+- Home ahora muestra un resumen histórico de progreso para retomar contexto entre sesiones.
+- Se extendieron tests de preferencias y de lógica de estadísticas para cubrir normalización y actualización de métricas.
 
 ## Aprendizajes hasta ahora
 - Separar dominio (SPM) de la app (SwiftUI) facilitó probar la lógica sin depender de UI ni audio real.
@@ -92,4 +95,4 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
    - `xcodebuild test -project CaveExplorer.xcodeproj -scheme CaveExplorer -destination 'platform=macOS'`
 
 ## Próximo bloque sugerido
-- Persistir mejores runs (profundidad máxima y cantidad de escapes), mostrarlas en home y cubrir la lógica con tests unitarios.
+- Añadir onboarding breve en home (micro-guía de controles/flujo) con opción de ocultarlo después de la primera lectura.

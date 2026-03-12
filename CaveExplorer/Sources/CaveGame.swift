@@ -201,6 +201,25 @@ struct CaveRunSummary: Equatable {
 	}
 }
 
+struct CaveRunStats: Equatable {
+	var bestDepth: Int
+	var escapedRuns: Int
+
+	static let empty = CaveRunStats(bestDepth: 0, escapedRuns: 0)
+
+	var normalized: CaveRunStats {
+		CaveRunStats(bestDepth: max(0, bestDepth), escapedRuns: max(0, escapedRuns))
+	}
+
+	func recording(_ summary: CaveRunSummary) -> CaveRunStats {
+		let current = normalized
+		return CaveRunStats(
+			bestDepth: max(current.bestDepth, summary.reachedDepth),
+			escapedRuns: current.escapedRuns + (summary.isSuccessful ? 1 : 0)
+		).normalized
+	}
+}
+
 extension CaveOutcome {
 	fileprivate var screenTitle: String {
 		switch self {

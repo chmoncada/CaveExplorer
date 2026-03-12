@@ -3,6 +3,7 @@ import Foundation
 struct CavePreferencesSnapshot: Equatable {
 	var gameSettings: CaveGameSettings
 	var audioSettings: CaveAudioSettings
+	var runStats: CaveRunStats
 }
 
 struct CavePreferencesStore {
@@ -13,11 +14,14 @@ struct CavePreferencesStore {
 		static let effectsVolume = "cave.audio.effectsVolume"
 		static let musicVolume = "cave.audio.musicVolume"
 		static let isMuted = "cave.audio.isMuted"
+		static let bestDepth = "cave.stats.bestDepth"
+		static let escapedRuns = "cave.stats.escapedRuns"
 	}
 
 	var load: () -> CavePreferencesSnapshot
 	var saveGameSettings: (CaveGameSettings) -> Void
 	var saveAudioSettings: (CaveAudioSettings) -> Void
+	var saveRunStats: (CaveRunStats) -> Void
 
 	static let live = userDefaults()
 
@@ -26,6 +30,7 @@ struct CavePreferencesStore {
 			load: {
 				let defaultGameSettings = CaveGameSettings.default
 				let defaultAudioSettings = CaveAudioSettings.default
+				let defaultRunStats = CaveRunStats.empty
 
 				let storedGameSettings = CaveGameSettings(
 					maxDepth: defaults.object(forKey: Keys.maxDepth) as? Int ?? defaultGameSettings.maxDepth,
@@ -45,9 +50,15 @@ struct CavePreferencesStore {
 					isMuted: defaults.object(forKey: Keys.isMuted) as? Bool ?? defaultAudioSettings.isMuted
 				).normalized
 
+				let storedRunStats = CaveRunStats(
+					bestDepth: defaults.object(forKey: Keys.bestDepth) as? Int ?? defaultRunStats.bestDepth,
+					escapedRuns: defaults.object(forKey: Keys.escapedRuns) as? Int ?? defaultRunStats.escapedRuns
+				).normalized
+
 				return CavePreferencesSnapshot(
 					gameSettings: storedGameSettings,
-					audioSettings: storedAudioSettings
+					audioSettings: storedAudioSettings,
+					runStats: storedRunStats
 				)
 			},
 			saveGameSettings: { settings in
@@ -61,6 +72,11 @@ struct CavePreferencesStore {
 				defaults.set(normalized.effectsVolume, forKey: Keys.effectsVolume)
 				defaults.set(normalized.musicVolume, forKey: Keys.musicVolume)
 				defaults.set(normalized.isMuted, forKey: Keys.isMuted)
+			},
+			saveRunStats: { runStats in
+				let normalized = runStats.normalized
+				defaults.set(normalized.bestDepth, forKey: Keys.bestDepth)
+				defaults.set(normalized.escapedRuns, forKey: Keys.escapedRuns)
 			}
 		)
 	}
