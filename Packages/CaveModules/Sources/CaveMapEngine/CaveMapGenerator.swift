@@ -21,7 +21,7 @@ private struct MapBuilder {
 		self.config = config
 		let seed = config.randomSeed ?? UInt64.random(in: UInt64.min...UInt64.max)
 		self.random = SeededRandomNumberGenerator(seed: seed)
-		self.happyDepth = Int.random(in: config.minimumHappyDepth...config.maxDepth, using: &random)
+		self.happyDepth = Int.random(in: config.happyEndingDepthRange, using: &random)
 	}
 
 	mutating func build() -> CaveMapGraph {

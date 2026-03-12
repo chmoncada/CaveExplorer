@@ -21,8 +21,30 @@ final class CaveMapGeneratorTests: XCTestCase {
 		let graph = CaveMapGenerator().generate(config: config)
 		let happyNode = try XCTUnwrap(graph.happyEndingNode)
 
-		XCTAssertGreaterThanOrEqual(happyNode.depth, config.minimumHappyDepth)
-		XCTAssertLessThanOrEqual(happyNode.depth, config.maxDepth)
+		XCTAssertTrue(config.happyEndingDepthRange.contains(happyNode.depth))
+	}
+
+	func test_generate_keepsHappyEndingInsideConfiguredDepthWindowForManySeeds() throws {
+		let generator = CaveMapGenerator()
+		let seeds: ClosedRange<UInt64> = 0...250
+
+		for seed in seeds {
+			let config = CaveConfig(maxDepth: 12, happyEndingStartPercent: 0.75, randomSeed: seed)
+			let graph = generator.generate(config: config)
+			let happyNode = try XCTUnwrap(graph.happyEndingNode)
+			XCTAssertTrue(
+				config.happyEndingDepthRange.contains(happyNode.depth),
+				"Happy ending depth \(happyNode.depth) is outside \(config.happyEndingDepthRange) for seed \(seed)"
+			)
+		}
+	}
+
+	func test_generate_placesHappyEndingAtMaxDepthWhenStartPercentIsOne() throws {
+		let config = CaveConfig(maxDepth: 9, happyEndingStartPercent: 1.0, randomSeed: 123)
+		let graph = CaveMapGenerator().generate(config: config)
+		let happyNode = try XCTUnwrap(graph.happyEndingNode)
+
+		XCTAssertEqual(happyNode.depth, config.maxDepth)
 	}
 
 	func test_generate_usesOnlyTwoOrThreeOptionsInJunctions() {

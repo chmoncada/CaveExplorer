@@ -33,4 +33,8 @@ public struct CaveConfig: Equatable, Sendable {
 	public var minimumHappyDepth: Int {
 		max(1, Int(ceil(Double(maxDepth) * happyEndingStartPercent)))
 	}
+
+	public var happyEndingDepthRange: ClosedRange<Int> {
+		minimumHappyDepth...maxDepth
+	}
 }

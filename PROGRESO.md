@@ -1,6 +1,6 @@
 # CaveExplorer - Estado del proyecto
 
-Actualizado: 15 de febrero de 2026
+Actualizado: 12 de marzo de 2026
 
 ## Objetivo del juego
 Crear un juego de exploración de cuevas con avance automático, decisiones por tiempo, múltiples finales y atmósfera de tensión para macOS (SwiftUI).
@@ -46,8 +46,7 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
   - refinamiento de sensación de avance/velocidad por profundidad,
   - más variedad de eventos por nodo.
 - Motor de mapa:
-  - reglas más ricas para árbol de decisiones,
-  - controlar explícitamente que el final feliz aparezca en el último 20% (y hacerlo configurable en settings).
+  - reglas más ricas para árbol de decisiones.
 - Visual:
   - más capas/efectos para reforzar “caminata en cueva” (sombras, partículas contextuales, variación por bioma/zona),
   - pulido de feedback visual por peligro y por outcome final.
@@ -61,8 +60,12 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
   - persistencia básica de preferencias y mejores runs.
 - Testing:
   - más tests de integración entre sesión + UI state,
-  - tests para reglas avanzadas del generador de mapa,
   - smoke tests de audio controller ante cambios rápidos de estado.
+
+## Avance reciente
+- Generador de mapa actualizado para usar una ventana de profundidad explícita del final feliz (`happyEndingDepthRange`).
+- El final feliz queda garantizado dentro del tramo configurado por `happyEndingStartPercent`.
+- Se añadieron tests dedicados en dominio y motor de mapa para validar rango, borde al 100% y consistencia en múltiples seeds.
 
 ## Aprendizajes hasta ahora
 - Separar dominio (SPM) de la app (SwiftUI) facilitó probar la lógica sin depender de UI ni audio real.
@@ -84,4 +87,4 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
    - `xcodebuild test -project CaveExplorer.xcodeproj -scheme CaveExplorer -destination 'platform=macOS'`
 
 ## Próximo bloque sugerido
-- Implementar reglas avanzadas del generador para controlar la ubicación del final feliz (último 20%), con tests dedicados y settings preparado para exponerlo en UI.
+- Implementar persistencia básica de preferencias (settings de partida y audio), con tests de lectura/escritura y aplicación automática al iniciar la app.
