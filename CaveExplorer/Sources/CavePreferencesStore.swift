@@ -4,6 +4,7 @@ struct CavePreferencesSnapshot: Equatable {
 	var gameSettings: CaveGameSettings
 	var audioSettings: CaveAudioSettings
 	var runStats: CaveRunStats
+	var hasSeenOnboarding: Bool
 }
 
 struct CavePreferencesStore {
@@ -16,12 +17,14 @@ struct CavePreferencesStore {
 		static let isMuted = "cave.audio.isMuted"
 		static let bestDepth = "cave.stats.bestDepth"
 		static let escapedRuns = "cave.stats.escapedRuns"
+		static let hasSeenOnboarding = "cave.ui.hasSeenOnboarding"
 	}
 
 	var load: () -> CavePreferencesSnapshot
 	var saveGameSettings: (CaveGameSettings) -> Void
 	var saveAudioSettings: (CaveAudioSettings) -> Void
 	var saveRunStats: (CaveRunStats) -> Void
+	var saveHasSeenOnboarding: (Bool) -> Void
 
 	static let live = userDefaults()
 
@@ -55,10 +58,13 @@ struct CavePreferencesStore {
 					escapedRuns: defaults.object(forKey: Keys.escapedRuns) as? Int ?? defaultRunStats.escapedRuns
 				).normalized
 
+				let hasSeenOnboarding = defaults.object(forKey: Keys.hasSeenOnboarding) as? Bool ?? false
+
 				return CavePreferencesSnapshot(
 					gameSettings: storedGameSettings,
 					audioSettings: storedAudioSettings,
-					runStats: storedRunStats
+					runStats: storedRunStats,
+					hasSeenOnboarding: hasSeenOnboarding
 				)
 			},
 			saveGameSettings: { settings in
@@ -77,6 +83,9 @@ struct CavePreferencesStore {
 				let normalized = runStats.normalized
 				defaults.set(normalized.bestDepth, forKey: Keys.bestDepth)
 				defaults.set(normalized.escapedRuns, forKey: Keys.escapedRuns)
+			},
+			saveHasSeenOnboarding: { hasSeenOnboarding in
+				defaults.set(hasSeenOnboarding, forKey: Keys.hasSeenOnboarding)
 			}
 		)
 	}

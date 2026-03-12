@@ -12,6 +12,7 @@ final class CavePreferencesStoreTests: XCTestCase {
 		XCTAssertEqual(snapshot.gameSettings, CaveGameSettings.default)
 		XCTAssertEqual(snapshot.audioSettings, CaveAudioSettings.default)
 		XCTAssertEqual(snapshot.runStats, .empty)
+		XCTAssertFalse(snapshot.hasSeenOnboarding)
 	}
 
 	func test_load_normalizesOutOfRangeStoredValues() throws {
@@ -39,6 +40,7 @@ final class CavePreferencesStoreTests: XCTestCase {
 		XCTAssertEqual(snapshot.audioSettings.musicVolume, 0, accuracy: 0.001)
 		XCTAssertTrue(snapshot.audioSettings.isMuted)
 		XCTAssertEqual(snapshot.runStats, .empty)
+		XCTAssertFalse(snapshot.hasSeenOnboarding)
 	}
 
 	func test_save_thenLoad_roundTripsNormalizedValues() throws {
@@ -60,6 +62,7 @@ final class CavePreferencesStoreTests: XCTestCase {
 			)
 		)
 		store.saveRunStats(CaveRunStats(bestDepth: -4, escapedRuns: 6))
+		store.saveHasSeenOnboarding(true)
 
 		let snapshot = store.load()
 
@@ -75,6 +78,7 @@ final class CavePreferencesStoreTests: XCTestCase {
 		XCTAssertTrue(snapshot.audioSettings.isMuted)
 		XCTAssertEqual(snapshot.runStats.bestDepth, 0)
 		XCTAssertEqual(snapshot.runStats.escapedRuns, 6)
+		XCTAssertTrue(snapshot.hasSeenOnboarding)
 	}
 
 	private func makeIsolatedDefaults() throws -> UserDefaults {

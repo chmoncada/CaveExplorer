@@ -8,6 +8,7 @@ struct ContentView: View {
 	@State private var session: CaveSession
 	@State private var runStats: CaveRunStats
 	@State private var lastRecordedRunSummary: CaveRunSummary?
+	@State private var showOnboarding: Bool
 	@State private var torchPulse = 0.0
 	@State private var gameFlow: GameFlow = .home
 	@State private var presentedSheet: PresentedSheet?
@@ -26,6 +27,7 @@ struct ContentView: View {
 		_session = State(initialValue: CaveSession(config: snapshot.gameSettings.caveConfig))
 		_runStats = State(initialValue: snapshot.runStats)
 		_lastRecordedRunSummary = State(initialValue: nil)
+		_showOnboarding = State(initialValue: !snapshot.hasSeenOnboarding)
 	}
 
 	public var body: some View {
@@ -60,10 +62,15 @@ struct ContentView: View {
 				StartMenuOverlayView(
 					settings: settings,
 					runStats: runStats,
+					showOnboarding: showOnboarding,
 					selectedPreset: selectedPreset,
 					onSelectPreset: { preset in
 						selectedPreset = preset
 						settings = preset.settings
+					},
+					onDismissOnboarding: {
+						showOnboarding = false
+						preferencesStore.saveHasSeenOnboarding(true)
 					},
 					onStart: {
 						startRun()
@@ -261,8 +268,10 @@ private struct RunSummaryCardView: View {
 private struct StartMenuOverlayView: View {
 	let settings: CaveGameSettings
 	let runStats: CaveRunStats
+	let showOnboarding: Bool
 	let selectedPreset: CaveGamePreset?
 	let onSelectPreset: (CaveGamePreset) -> Void
+	let onDismissOnboarding: () -> Void
 	let onStart: () -> Void
 	let onOpenSettings: () -> Void
 
@@ -302,6 +311,12 @@ private struct StartMenuOverlayView: View {
 					.font(.footnote.monospacedDigit())
 					.foregroundStyle(.white.opacity(0.78))
 
+				if showOnboarding {
+					OnboardingCardView(onClose: {
+						onDismissOnboarding()
+					})
+				}
+
 				HStack(spacing: 10) {
 					Button("Iniciar expedicion", systemImage: "play.fill") {
 						onStart()
@@ -327,6 +342,33 @@ private struct StartMenuOverlayView: View {
 			Spacer()
 		}
 		.padding(22)
+	}
+}
+
+private struct OnboardingCardView: View {
+	let onClose: () -> Void
+
+	var body: some View {
+		VStack(alignment: .leading, spacing: 10) {
+			Text("Como jugar")
+				.font(.headline)
+				.foregroundStyle(.white)
+
+			Text("1) Inicia la expedicion. 2) Elige un camino antes de que termine el tiempo. 3) Llega al portal para escapar.")
+				.font(.subheadline)
+				.foregroundStyle(.white.opacity(0.9))
+
+			Button("Entendido") {
+				onClose()
+			}
+			.buttonStyle(.bordered)
+		}
+		.padding(12)
+		.background(.black.opacity(0.3), in: .rect(cornerRadius: 12))
+		.overlay {
+			RoundedRectangle(cornerRadius: 12)
+				.stroke(.white.opacity(0.16), lineWidth: 1)
+		}
 	}
 }
 
