@@ -34,60 +34,16 @@ struct CavePreferencesStore {
 	static func userDefaults(_ defaults: UserDefaults = .standard) -> CavePreferencesStore {
 		CavePreferencesStore(
 			load: {
-				let defaultGameSettings = CaveGameSettings.default
-				let defaultAudioSettings = CaveAudioSettings.default
-				let defaultRunStats = CaveRunStats.empty
-
-				let storedGameSettings = CaveGameSettings(
-					maxDepth: defaults.object(forKey: Keys.maxDepth) as? Int ?? defaultGameSettings.maxDepth,
-					decisionTime: defaults.object(forKey: Keys.decisionTime) as? Double ?? defaultGameSettings.decisionTime,
-					happyEndingStartPercent:
-						defaults.object(forKey: Keys.happyEndingStartPercent) as? Double
-							?? defaultGameSettings.happyEndingStartPercent
-				).normalized
-
-				let storedAudioSettings = CaveAudioSettings(
-					effectsVolume:
-						defaults.object(forKey: Keys.effectsVolume) as? Double
-							?? defaultAudioSettings.effectsVolume,
-					musicVolume:
-						defaults.object(forKey: Keys.musicVolume) as? Double
-							?? defaultAudioSettings.musicVolume,
-					isMuted: defaults.object(forKey: Keys.isMuted) as? Bool ?? defaultAudioSettings.isMuted
-				).normalized
-
-				let storedRunStats = CaveRunStats(
-					bestDepth: defaults.object(forKey: Keys.bestDepth) as? Int ?? defaultRunStats.bestDepth,
-					escapedRuns: defaults.object(forKey: Keys.escapedRuns) as? Int ?? defaultRunStats.escapedRuns
-				).normalized
-
-				let hasSeenOnboarding = defaults.object(forKey: Keys.hasSeenOnboarding) as? Bool ?? false
-				let recentRuns = loadRecentRuns(from: defaults)
-
-				return CavePreferencesSnapshot(
-					gameSettings: storedGameSettings,
-					audioSettings: storedAudioSettings,
-					runStats: storedRunStats,
-					recentRuns: recentRuns,
-					hasSeenOnboarding: hasSeenOnboarding
-				)
+				loadSnapshot(from: defaults)
 			},
 			saveGameSettings: { settings in
-				let normalized = settings.normalized
-				defaults.set(normalized.maxDepth, forKey: Keys.maxDepth)
-				defaults.set(normalized.decisionTime, forKey: Keys.decisionTime)
-				defaults.set(normalized.happyEndingStartPercent, forKey: Keys.happyEndingStartPercent)
+				saveGameSettings(settings, into: defaults)
 			},
 			saveAudioSettings: { audioSettings in
-				let normalized = audioSettings.normalized
-				defaults.set(normalized.effectsVolume, forKey: Keys.effectsVolume)
-				defaults.set(normalized.musicVolume, forKey: Keys.musicVolume)
-				defaults.set(normalized.isMuted, forKey: Keys.isMuted)
+				saveAudioSettings(audioSettings, into: defaults)
 			},
 			saveRunStats: { runStats in
-				let normalized = runStats.normalized
-				defaults.set(normalized.bestDepth, forKey: Keys.bestDepth)
-				defaults.set(normalized.escapedRuns, forKey: Keys.escapedRuns)
+				saveRunStats(runStats, into: defaults)
 			},
 			saveRecentRuns: { recentRuns in
 				saveRecentRuns(recentRuns, into: defaults)
@@ -96,6 +52,68 @@ struct CavePreferencesStore {
 				defaults.set(hasSeenOnboarding, forKey: Keys.hasSeenOnboarding)
 			}
 		)
+	}
+
+	private static func loadSnapshot(from defaults: UserDefaults) -> CavePreferencesSnapshot {
+		CavePreferencesSnapshot(
+			gameSettings: loadGameSettings(from: defaults),
+			audioSettings: loadAudioSettings(from: defaults),
+			runStats: loadRunStats(from: defaults),
+			recentRuns: loadRecentRuns(from: defaults),
+			hasSeenOnboarding: defaults.object(forKey: Keys.hasSeenOnboarding) as? Bool ?? false
+		)
+	}
+
+	private static func loadGameSettings(from defaults: UserDefaults) -> CaveGameSettings {
+		let defaultGameSettings = CaveGameSettings.default
+		return CaveGameSettings(
+			maxDepth: defaults.object(forKey: Keys.maxDepth) as? Int ?? defaultGameSettings.maxDepth,
+			decisionTime: defaults.object(forKey: Keys.decisionTime) as? Double ?? defaultGameSettings.decisionTime,
+			happyEndingStartPercent:
+				defaults.object(forKey: Keys.happyEndingStartPercent) as? Double
+					?? defaultGameSettings.happyEndingStartPercent
+		).normalized
+	}
+
+	private static func loadAudioSettings(from defaults: UserDefaults) -> CaveAudioSettings {
+		let defaultAudioSettings = CaveAudioSettings.default
+		return CaveAudioSettings(
+			effectsVolume:
+				defaults.object(forKey: Keys.effectsVolume) as? Double
+					?? defaultAudioSettings.effectsVolume,
+			musicVolume:
+				defaults.object(forKey: Keys.musicVolume) as? Double
+					?? defaultAudioSettings.musicVolume,
+			isMuted: defaults.object(forKey: Keys.isMuted) as? Bool ?? defaultAudioSettings.isMuted
+		).normalized
+	}
+
+	private static func loadRunStats(from defaults: UserDefaults) -> CaveRunStats {
+		let defaultRunStats = CaveRunStats.empty
+		return CaveRunStats(
+			bestDepth: defaults.object(forKey: Keys.bestDepth) as? Int ?? defaultRunStats.bestDepth,
+			escapedRuns: defaults.object(forKey: Keys.escapedRuns) as? Int ?? defaultRunStats.escapedRuns
+		).normalized
+	}
+
+	private static func saveGameSettings(_ settings: CaveGameSettings, into defaults: UserDefaults) {
+		let normalized = settings.normalized
+		defaults.set(normalized.maxDepth, forKey: Keys.maxDepth)
+		defaults.set(normalized.decisionTime, forKey: Keys.decisionTime)
+		defaults.set(normalized.happyEndingStartPercent, forKey: Keys.happyEndingStartPercent)
+	}
+
+	private static func saveAudioSettings(_ audioSettings: CaveAudioSettings, into defaults: UserDefaults) {
+		let normalized = audioSettings.normalized
+		defaults.set(normalized.effectsVolume, forKey: Keys.effectsVolume)
+		defaults.set(normalized.musicVolume, forKey: Keys.musicVolume)
+		defaults.set(normalized.isMuted, forKey: Keys.isMuted)
+	}
+
+	private static func saveRunStats(_ runStats: CaveRunStats, into defaults: UserDefaults) {
+		let normalized = runStats.normalized
+		defaults.set(normalized.bestDepth, forKey: Keys.bestDepth)
+		defaults.set(normalized.escapedRuns, forKey: Keys.escapedRuns)
 	}
 
 	private static func loadRecentRuns(from defaults: UserDefaults) -> [CaveRunRecord] {

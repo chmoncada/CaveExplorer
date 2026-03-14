@@ -79,6 +79,9 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
 - Se amplió el resumen de fin de run con tiempo estimado, seed usada y cantidad de decisiones tomadas.
 - Se agregó persistencia de historial corto de runs recientes y visualización del historial en home.
 - Se añadieron tests para líneas extendidas del resumen y para persistencia/recorte del historial reciente.
+- Se separó `ContentView` en vistas por responsabilidad (`CaveGameplayOverlayViews` y `CaveHomeOverlayViews`) para reducir tamaño de archivo y mejorar mantenibilidad.
+- Se regeneró el proyecto con Tuist para incluir nuevos archivos de vistas sin romper el target.
+- Desaparecieron los warnings de SwiftLint por longitud de archivo/función en la ruta principal de UI.
 
 ## Aprendizajes hasta ahora
 - Separar dominio (SPM) de la app (SwiftUI) facilitó probar la lógica sin depender de UI ni audio real.
@@ -100,4 +103,4 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
    - `xcodebuild test -project CaveExplorer.xcodeproj -scheme CaveExplorer -destination 'platform=macOS'`
 
 ## Próximo bloque sugerido
-- Separar `ContentView` en archivos por componentes (home, gameplay, cards) para reducir tamaño del archivo y eliminar warnings de longitud en SwiftLint.
+- Añadir tests unitarios para el flujo de persistencia de historial reciente al finalizar run (integración `CaveSession` + `CavePreferencesStore`) y limitar explícitamente el tamaño visible del historial en home con constantes compartidas.
