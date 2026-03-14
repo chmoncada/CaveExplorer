@@ -22,6 +22,14 @@ final class CaveExplorerTests: XCTestCase {
 		}
 	}
 
+	func test_startNewGame_exposesCurrentSeedForReproducibility() {
+		let session = makeSession()
+
+		session.startNewGame(seed: 123)
+
+		XCTAssertEqual(session.currentSeed, 123)
+	}
+
 	func test_tick_afterTravelTime_entersDecisionAndExposesChoices() {
 		let session = makeSession()
 		session.startNewGame(seed: 2)

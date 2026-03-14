@@ -1,5 +1,9 @@
 import SwiftUI
 
+#if os(macOS)
+import AppKit
+#endif
+
 struct GameplayOverlayView: View {
 	let session: CaveSession
 	let onChoose: (Int) -> Void
@@ -13,7 +17,8 @@ struct GameplayOverlayView: View {
 				maxDepth: session.maxDepth,
 				title: session.titleText,
 				subtitle: session.subtitleText,
-				depthProgress: session.depthProgress
+				depthProgress: session.depthProgress,
+				currentSeed: session.currentSeed
 			)
 
 			Spacer()
@@ -88,6 +93,7 @@ struct TopHUDView: View {
 	let title: String
 	let subtitle: String
 	let depthProgress: Double
+	let currentSeed: UInt64?
 
 	var body: some View {
 		VStack(alignment: .leading, spacing: 8) {
@@ -105,6 +111,10 @@ struct TopHUDView: View {
 			Text(subtitle)
 				.font(.subheadline)
 				.foregroundStyle(.white.opacity(0.9))
+
+			#if DEBUG
+			CurrentSeedPanelView(seed: currentSeed)
+			#endif
 		}
 		.frame(maxWidth: 540, alignment: .leading)
 		.padding(16)
@@ -116,6 +126,50 @@ struct TopHUDView: View {
 		.frame(maxWidth: .infinity, alignment: .leading)
 	}
 }
+
+#if DEBUG
+struct CurrentSeedPanelView: View {
+	let seed: UInt64?
+	@State private var didCopy = false
+
+	private var seedText: String {
+		if let seed {
+			return String(seed)
+		}
+		return "aleatoria"
+	}
+
+	var body: some View {
+		HStack(spacing: 10) {
+			Label("Seed actual: \(seedText)", systemImage: "ladybug")
+				.font(.footnote.monospacedDigit())
+				.foregroundStyle(.white.opacity(0.8))
+
+			if let seed {
+				Button(didCopy ? "Copiada" : "Copiar") {
+					copySeed(seed)
+				}
+				.buttonStyle(.bordered)
+				.controlSize(.small)
+			}
+		}
+	}
+
+	private func copySeed(_ seed: UInt64) {
+		#if os(macOS)
+		let pasteboard = NSPasteboard.general
+		pasteboard.clearContents()
+		pasteboard.setString(String(seed), forType: .string)
+		#endif
+
+		didCopy = true
+		Task {
+			try? await Task.sleep(for: .seconds(1.2))
+			didCopy = false
+		}
+	}
+}
+#endif
 
 struct DecisionTimerView: View {
 	let remainingRatio: Double

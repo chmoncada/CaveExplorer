@@ -1,6 +1,11 @@
 # CaveExplorer - Estado del proyecto
 
-Actualizado: 12 de marzo de 2026
+Actualizado: 14 de marzo de 2026
+
+## Ruta sugerida a 1.0
+- `0.8`: herramientas de depuración de runs, reproducibilidad por seed y más cobertura de persistencia/flujo.
+- `0.9`: pulido fuerte de UX/jugabilidad (onboarding, feedback de derrota/victoria, balance y claridad de estados).
+- `1.0`: limpieza final de warnings, smoke tests críticos, checklist de release y validación manual macOS completa.
 
 ## Objetivo del juego
 Crear un juego de exploración de cuevas con avance automático, decisiones por tiempo, múltiples finales y atmósfera de tensión para macOS (SwiftUI).
@@ -85,6 +90,9 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
 - Se unificaron límites de historial reciente con constantes compartidas (`storedHistoryLimit` y `homeVisibleLimit`) para evitar valores mágicos.
 - Se añadieron tests de integración ligera entre `CaveSession` y `CavePreferencesStore` para validar persistencia de `runSummary` al finalizar una partida.
 - Se agregó cobertura para validar recorte del historial persistido al límite configurado.
+- Se añadió una ruta explícita por hitos (`0.8`, `0.9`, `1.0`) para que el progreso quede visible en este archivo.
+- Se incorporó panel debug de seed actual durante gameplay, visible solo en builds `DEBUG` y con acción de copiar en macOS.
+- Se agregó cobertura básica para exponer la seed activa desde `CaveSession` y facilitar runs reproducibles.
 
 ## Aprendizajes hasta ahora
 - Separar dominio (SPM) de la app (SwiftUI) facilitó probar la lógica sin depender de UI ni audio real.
@@ -106,4 +114,4 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
    - `xcodebuild test -project CaveExplorer.xcodeproj -scheme CaveExplorer -destination 'platform=macOS'`
 
 ## Próximo bloque sugerido
-- Añadir un pequeño panel de "seed actual" durante gameplay (copiable y visible solo en debug) para facilitar reproducibilidad de bugs y runs interesantes.
+- Ampliar tests de flujo completo del loop principal (victoria, derrota, persistencia final) y luego pasar al pulido de UX para hito `0.9`.

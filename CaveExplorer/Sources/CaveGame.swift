@@ -45,6 +45,10 @@ final class CaveSession {
 		runState?.currentDepth ?? 0
 	}
 
+	var currentSeed: UInt64? {
+		activeConfig.randomSeed
+	}
+
 	var depthProgress: Double {
 		guard maxDepth > 0 else { return 0 }
 		return min(1, max(0, Double(currentDepth) / Double(maxDepth)))
