@@ -93,6 +93,9 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
 - Se añadió una ruta explícita por hitos (`0.8`, `0.9`, `1.0`) para que el progreso quede visible en este archivo.
 - Se incorporó panel debug de seed actual durante gameplay, visible solo en builds `DEBUG` y con acción de copiar en macOS.
 - Se agregó cobertura básica para exponer la seed activa desde `CaveSession` y facilitar runs reproducibles.
+- Se ampliaron tests de flujo completo para cubrir victoria real siguiendo la ruta feliz generada por seed reproducible.
+- Se añadió validación de persistencia de runs fallidas al historial reciente y de métricas del resumen al terminar una partida completa.
+- Con esto el proyecto queda más cerca del hito `0.8` sólido, antes de pasar al pulido UX de `0.9`.
 
 ## Aprendizajes hasta ahora
 - Separar dominio (SPM) de la app (SwiftUI) facilitó probar la lógica sin depender de UI ni audio real.
@@ -114,4 +117,4 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
    - `xcodebuild test -project CaveExplorer.xcodeproj -scheme CaveExplorer -destination 'platform=macOS'`
 
 ## Próximo bloque sugerido
-- Ampliar tests de flujo completo del loop principal (victoria, derrota, persistencia final) y luego pasar al pulido de UX para hito `0.9`.
+- Pulir UX para el hito `0.9`: mejorar onboarding/game over/home con más claridad visual y de feedback, empezando por una pantalla de fin de partida más expresiva.

@@ -1,4 +1,5 @@
 import CaveDomain
+import CaveMapEngine
 import XCTest
 
 @testable import CaveExplorer
@@ -232,6 +233,43 @@ final class CaveExplorerTests: XCTestCase {
 		XCTAssertEqual(reloaded.recentRuns.first?.decisionsTaken, 0)
 	}
 
+	func test_playingHappyPath_reachesVictoryWithSummaryMetrics() throws {
+		let config = CaveConfig(maxDepth: 5, decisionTime: 1.0, happyEndingStartPercent: 0.8, randomSeed: 19)
+		let session = CaveSession(config: config)
+		let happyPath = try XCTUnwrap(makeHappyPath(for: config))
+
+		playSession(session, using: happyPath, travelTime: 1.1)
+
+		let summary = try XCTUnwrap(session.runSummary)
+		guard case .ended(let outcome) = session.runState?.phase else {
+			return XCTFail("Expected ended phase after following happy path")
+		}
+
+		XCTAssertEqual(outcome, .escapeTreasurePortal)
+		XCTAssertTrue(summary.isSuccessful)
+		XCTAssertEqual(summary.seed, 19)
+		XCTAssertEqual(summary.decisionsTaken, happyPath.count)
+		XCTAssertGreaterThan(summary.estimatedDuration, 0)
+	}
+
+	func test_timeoutEnding_persistsFailureRecentRunWithSeed() throws {
+		let defaults = try makeIsolatedDefaults()
+		let store = CavePreferencesStore.userDefaults(defaults)
+		let session = makeSession()
+
+		session.startNewGame(seed: 31)
+		session.tick(deltaTime: 1.1)
+		session.tick(deltaTime: 1.1)
+
+		let summary = try XCTUnwrap(session.runSummary)
+		store.saveRecentRuns(CaveRunRecord.appending(summary: summary, to: []))
+
+		let record = try XCTUnwrap(store.load().recentRuns.first)
+		XCTAssertFalse(record.isSuccessful)
+		XCTAssertEqual(record.seed, 31)
+		XCTAssertEqual(record.outcomeTitle, "El monstruo te alcanzo")
+	}
+
 	private func makeSession() -> CaveSession {
 		CaveSession(
 			config: CaveConfig(
@@ -240,6 +278,46 @@ final class CaveExplorerTests: XCTestCase {
 				happyEndingStartPercent: 0.8
 			)
 		)
+	}
+
+	private func makeHappyPath(for config: CaveConfig) -> [Int]? {
+		let graph = CaveMapGenerator().generate(config: config)
+		guard let happyNode = graph.happyEndingNode else { return nil }
+		let path = pathFromRoot(to: happyNode.id, in: graph)
+		return path.map { childIndex in
+			childIndex
+		}
+	}
+
+	private func pathFromRoot(to targetNodeID: Int, in graph: CaveMapGraph) -> [Int] {
+		func search(nodeID: Int) -> [Int]? {
+			guard let node = graph.nodes[nodeID] else { return nil }
+			for (index, childID) in node.childNodeIDs.enumerated() {
+				if childID == targetNodeID {
+					if case .junction = node.kind {
+						return [index]
+					}
+					return []
+				}
+				if let childPath = search(nodeID: childID) {
+					if case .junction = node.kind {
+						return [index] + childPath
+					}
+					return childPath
+				}
+			}
+			return nil
+		}
+
+		return search(nodeID: graph.rootNodeID) ?? []
+	}
+
+	private func playSession(_ session: CaveSession, using choiceIndexes: [Int], travelTime: TimeInterval) {
+		for choiceIndex in choiceIndexes {
+			session.tick(deltaTime: travelTime)
+			session.choose(optionIndex: choiceIndex)
+		}
+		session.tick(deltaTime: travelTime)
 	}
 
 	private func makeIsolatedDefaults() throws -> UserDefaults {
