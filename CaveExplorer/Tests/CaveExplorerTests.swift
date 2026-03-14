@@ -138,7 +138,15 @@ final class CaveExplorerTests: XCTestCase {
 
 		XCTAssertTrue(summary.isSuccessful)
 		XCTAssertEqual(summary.headline, "Escapaste de la cueva")
+		XCTAssertEqual(summary.statusLabel, "Escape confirmado")
 		XCTAssertEqual(summary.progressPercent, 80)
+	}
+
+	func test_runSummary_recommendsRetryForFailedRun() {
+		let summary = CaveRunSummary(outcome: .monsterAttack, reachedDepth: 4, maxDepth: 10)
+
+		XCTAssertEqual(summary.statusLabel, "Run terminada")
+		XCTAssertTrue(summary.recommendedNextAction.contains("Reintenta"))
 	}
 
 	func test_runSummary_clampsProgressPercentWithinBounds() {

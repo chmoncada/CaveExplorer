@@ -241,6 +241,17 @@ struct CaveRunSummary: Equatable {
 		outcome.screenSubtitle
 	}
 
+	var statusLabel: String {
+		isSuccessful ? "Escape confirmado" : "Run terminada"
+	}
+
+	var recommendedNextAction: String {
+		if isSuccessful {
+			return "Prueba otra seed o sube la dificultad."
+		}
+		return "Reintenta rapido o ajusta tus settings antes de bajar otra vez."
+	}
+
 	var estimatedDurationLine: String {
 		let seconds = estimatedDuration.formatted(.number.precision(.fractionLength(1)))
 		return "Tiempo estimado: \(seconds)s"

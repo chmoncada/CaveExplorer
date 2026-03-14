@@ -47,6 +47,12 @@ struct StartMenuOverlayView: View {
 					.font(.footnote.monospacedDigit())
 					.foregroundStyle(.white.opacity(0.78))
 
+				HStack(spacing: 10) {
+					HomeStatCardView(title: "Mejor profundidad", value: "\(runStats.bestDepth)", accent: .orange)
+					HomeStatCardView(title: "Escapes", value: "\(runStats.escapedRuns)", accent: .green)
+					HomeStatCardView(title: "Preset", value: selectedPreset?.title ?? "Custom", accent: .blue)
+				}
+
 				if !recentRuns.isEmpty {
 					RecentRunsPanelView(recentRuns: recentRuns)
 				}
@@ -124,9 +130,9 @@ struct OnboardingCardView: View {
 				.font(.headline)
 				.foregroundStyle(.white)
 
-			Text("1) Inicia la expedicion. 2) Elige un camino antes de que termine el tiempo. 3) Llega al portal para escapar.")
-				.font(.subheadline)
-				.foregroundStyle(.white.opacity(0.9))
+			OnboardingStepRow(icon: "play.circle.fill", text: "Inicia la expedicion y mantente atento al HUD.")
+			OnboardingStepRow(icon: "timer", text: "Cada cruce tiene tiempo limite; dudar demasiado atrae al monstruo.")
+			OnboardingStepRow(icon: "sparkles", text: "Llega al portal para escapar y mejorar tu historial.")
 
 			Button("Entendido") {
 				onClose()
@@ -138,6 +144,48 @@ struct OnboardingCardView: View {
 		.overlay {
 			RoundedRectangle(cornerRadius: 12)
 				.stroke(.white.opacity(0.16), lineWidth: 1)
+		}
+	}
+}
+
+struct HomeStatCardView: View {
+	let title: String
+	let value: String
+	let accent: Color
+
+	var body: some View {
+		VStack(alignment: .leading, spacing: 6) {
+			Text(title)
+				.font(.caption)
+				.foregroundStyle(.white.opacity(0.7))
+
+			Text(value)
+				.font(.title3.bold())
+				.foregroundStyle(.white)
+		}
+		.frame(maxWidth: .infinity, alignment: .leading)
+		.padding(12)
+		.background(accent.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+		.overlay {
+			RoundedRectangle(cornerRadius: 12)
+				.stroke(accent.opacity(0.28), lineWidth: 1)
+		}
+	}
+}
+
+struct OnboardingStepRow: View {
+	let icon: String
+	let text: String
+
+	var body: some View {
+		HStack(alignment: .top, spacing: 10) {
+			Image(systemName: icon)
+				.foregroundStyle(.orange)
+				.frame(width: 18)
+
+			Text(text)
+				.font(.subheadline)
+				.foregroundStyle(.white.opacity(0.9))
 		}
 	}
 }

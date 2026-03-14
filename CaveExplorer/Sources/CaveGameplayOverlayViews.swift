@@ -48,42 +48,89 @@ struct RunSummaryCardView: View {
 	let summary: CaveRunSummary
 
 	var body: some View {
-		VStack(alignment: .leading, spacing: 8) {
-			Text(summary.headline)
-				.font(.headline)
-				.foregroundStyle(summary.isSuccessful ? .green : .orange)
+		VStack(alignment: .leading, spacing: 12) {
+			HStack(alignment: .center) {
+				Label(summary.statusLabel, systemImage: summary.isSuccessful ? "sparkles" : "exclamationmark.triangle.fill")
+					.font(.footnote.weight(.semibold))
+					.foregroundStyle(summary.isSuccessful ? Color.green : Color.orange)
+					.padding(.horizontal, 10)
+					.padding(.vertical, 6)
+					.background((summary.isSuccessful ? Color.green : Color.orange).opacity(0.16), in: Capsule())
+
+				Spacer()
+
+				Text(summary.headline)
+					.font(.headline)
+					.foregroundStyle(.white.opacity(0.92))
+			}
 
 			Text(summary.outcomeTitle)
-				.font(.title3.bold())
+				.font(.title2.bold())
 				.foregroundStyle(.white)
 
 			Text(summary.outcomeSubtitle)
 				.font(.subheadline)
-				.foregroundStyle(.white.opacity(0.9))
+				.foregroundStyle(.white.opacity(0.88))
 
-			Text(summary.depthLine)
-				.font(.subheadline.monospacedDigit())
-				.foregroundStyle(.white.opacity(0.85))
+			VStack(alignment: .leading, spacing: 6) {
+				Text(summary.depthLine)
+					.font(.subheadline.monospacedDigit())
+					.foregroundStyle(.white.opacity(0.9))
 
-			Text(summary.estimatedDurationLine)
-				.font(.footnote.monospacedDigit())
-				.foregroundStyle(.white.opacity(0.8))
+				ProgressView(value: summary.progressRatio)
+					.tint(summary.isSuccessful ? .green : .orange)
+			}
 
-			Text(summary.decisionsLine)
-				.font(.footnote.monospacedDigit())
-				.foregroundStyle(.white.opacity(0.8))
+			HStack(spacing: 8) {
+				SummaryMetricChip(
+					title: "Tiempo",
+					value: summary.estimatedDurationLine.replacingOccurrences(of: "Tiempo estimado: ", with: "")
+				)
+				SummaryMetricChip(title: "Decisiones", value: "\(summary.decisionsTaken)")
+				SummaryMetricChip(title: "Seed", value: summary.seed.map { String($0) } ?? "Aleatoria")
+			}
 
-			Text(summary.seedLine)
-				.font(.footnote.monospacedDigit())
-				.foregroundStyle(.white.opacity(0.8))
+			Text(summary.recommendedNextAction)
+				.font(.footnote)
+				.foregroundStyle(.white.opacity(0.74))
 		}
 		.frame(maxWidth: 540, alignment: .leading)
-		.padding(14)
-		.background(.black.opacity(0.36), in: .rect(cornerRadius: 14))
+		.padding(16)
+		.background(
+			LinearGradient(
+				colors: [
+					(summary.isSuccessful ? Color.green : Color.orange).opacity(0.18),
+					Color.black.opacity(0.44)
+				],
+				startPoint: .topLeading,
+				endPoint: .bottomTrailing
+			),
+			in: .rect(cornerRadius: 18)
+		)
 		.overlay {
-			RoundedRectangle(cornerRadius: 14)
-				.stroke(.white.opacity(0.18), lineWidth: 1)
+			RoundedRectangle(cornerRadius: 18)
+				.stroke((summary.isSuccessful ? Color.green : Color.orange).opacity(0.28), lineWidth: 1)
 		}
+	}
+}
+
+struct SummaryMetricChip: View {
+	let title: String
+	let value: String
+
+	var body: some View {
+		VStack(alignment: .leading, spacing: 2) {
+			Text(title.uppercased())
+				.font(.caption2.weight(.semibold))
+				.foregroundStyle(.white.opacity(0.56))
+
+			Text(value)
+				.font(.footnote.monospacedDigit())
+				.foregroundStyle(.white.opacity(0.92))
+		}
+		.padding(.horizontal, 10)
+		.padding(.vertical, 8)
+		.background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
 	}
 }
 
