@@ -169,6 +169,49 @@ final class CaveSoundControllerTests: XCTestCase {
 		XCTAssertTrue(spyAmbientPlayer.latestMutedState)
 	}
 
+	func test_handle_rapidPhaseChanges_playsExpectedCuesWithoutDuplicateEnding() {
+		let spyPlayer = SpySoundPlayer()
+		let spyMusicPlayer = SpyBackgroundMusicPlayer()
+		let spyAmbientPlayer = SpyAmbientPlayer()
+		let controller = CaveSoundController(
+			player: spyPlayer,
+			backgroundMusicPlayer: spyMusicPlayer,
+			ambientPlayer: spyAmbientPlayer
+		)
+
+		controller.startRun(initialState: waitingState(nodeID: 8, remaining: 5, total: 5))
+		controller.handle(runState: travelingState())
+		controller.handle(runState: waitingState(nodeID: 8, remaining: 1, total: 5))
+		controller.handle(runState: endedState(.escapeTreasurePortal))
+		controller.handle(runState: endedState(.escapeTreasurePortal))
+		controller.handle(runState: nil)
+
+		XCTAssertEqual(
+			spyPlayer.playedCues,
+			[.runStarted, .decisionAppeared, .decisionAppeared, .decisionUrgent, .happyEnding]
+		)
+		XCTAssertEqual(spyMusicPlayer.stopCalls, 3)
+		XCTAssertEqual(spyAmbientPlayer.stopCalls, 3)
+	}
+
+	func test_stopAll_thenRestartRun_resetsTrackerForAnotherFastRun() {
+		let spyPlayer = SpySoundPlayer()
+		let controller = CaveSoundController(
+			player: spyPlayer,
+			backgroundMusicPlayer: SpyBackgroundMusicPlayer(),
+			ambientPlayer: SpyAmbientPlayer()
+		)
+
+		controller.startRun(initialState: waitingState(nodeID: 2, remaining: 5, total: 5))
+		controller.stopAll()
+		controller.startRun(initialState: waitingState(nodeID: 2, remaining: 0.8, total: 5))
+
+		XCTAssertEqual(
+			spyPlayer.playedCues,
+			[.runStarted, .decisionAppeared, .runStarted, .decisionAppeared, .decisionUrgent]
+		)
+	}
+
 	private final class SpySoundPlayer: CaveSoundPlaying {
 		private(set) var playedCues: [CaveSoundCue] = []
 		private(set) var latestEffectsVolume: Float = 1

@@ -7,6 +7,12 @@ Actualizado: 14 de marzo de 2026
 - `0.9`: pulido fuerte de UX/jugabilidad (onboarding, feedback de derrota/victoria, balance y claridad de estados).
 - `1.0`: limpieza final de warnings, smoke tests críticos, checklist de release y validación manual macOS completa.
 
+## Checklist 1.0
+- Hecho: loop principal, persistencia, historial, onboarding, resumen de run, seed debug y balance base.
+- Hecho: tests de dominio, generador, engine, sesión, persistencia y flujo completo feliz/fallido.
+- Hecho: smoke tests del audio/controller ante cambios rápidos de estado.
+- Pendiente manual antes de llamar release final: abrir app en macOS, jugar presets principales, validar audio/animaciones/settings y generar build release.
+
 ## Objetivo del juego
 Crear un juego de exploración de cuevas con avance automático, decisiones por tiempo, múltiples finales y atmósfera de tensión para macOS (SwiftUI).
 
@@ -102,6 +108,8 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
 - Se reequilibró la sensación de avance: el viaje se acelera ligeramente a mayor profundidad para reforzar tensión y ritmo.
 - El generador ahora reduce terminaciones letales demasiado tempranas y concentra más riesgo hacia el tramo tardío de la run.
 - Se añadieron tests de dominio/gameplay para tiempos de viaje por profundidad y probabilidad de terminación temprana escalada.
+- Se añadieron smoke tests del audio/controller para transiciones rápidas entre fases, reinicios y finales sin cues duplicadas.
+- Quedó documentada una checklist mínima de `1.0` dentro de este archivo para el cierre manual final.
 
 ## Aprendizajes hasta ahora
 - Separar dominio (SPM) de la app (SwiftUI) facilitó probar la lógica sin depender de UI ni audio real.
@@ -123,4 +131,4 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
    - `xcodebuild test -project CaveExplorer.xcodeproj -scheme CaveExplorer -destination 'platform=macOS'`
 
 ## Próximo bloque sugerido
-- Entrar en tramo `1.0`: smoke tests del audio/controller ante cambios rápidos de estado y checklist final de release con validaciones manuales.
+- Ejecutar validación manual final en macOS y, si todo se siente estable, marcar el proyecto como `1.0` candidata.
