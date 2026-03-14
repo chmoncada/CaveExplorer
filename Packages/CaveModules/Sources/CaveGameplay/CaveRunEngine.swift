@@ -18,11 +18,13 @@ public struct CaveRunEngine: Sendable {
 		)
 
 		if let nextNodeID = rootNode.childNodeIDs.first {
+			let targetDepth = graph.nodes[nextNodeID]?.depth ?? rootNode.depth
+			let travelTime = config.travelTime(forDepth: targetDepth)
 			let travel = TravelState(
 				fromNodeID: rootNode.id,
 				toNodeID: nextNodeID,
-				totalTime: config.decisionTime,
-				remainingTime: config.decisionTime
+				totalTime: travelTime,
+				remainingTime: travelTime
 			)
 			self.stateStorage = CaveRunState(currentNodeID: rootNode.id, currentDepth: rootNode.depth, phase: .traveling(travel))
 		} else {
@@ -135,6 +137,8 @@ public struct CaveRunEngine: Sendable {
 
 	private mutating func beginTravel(fromNodeID: Int, toNodeID: Int) {
 		let fromDepth = graph.nodes[fromNodeID]?.depth ?? 0
+		let targetDepth = graph.nodes[toNodeID]?.depth ?? fromDepth
+		let travelTime = config.travelTime(forDepth: targetDepth)
 		stateStorage = CaveRunState(
 			currentNodeID: fromNodeID,
 			currentDepth: fromDepth,
@@ -142,8 +146,8 @@ public struct CaveRunEngine: Sendable {
 				TravelState(
 					fromNodeID: fromNodeID,
 					toNodeID: toNodeID,
-					totalTime: config.decisionTime,
-					remainingTime: config.decisionTime
+					totalTime: travelTime,
+					remainingTime: travelTime
 				)
 			)
 		)

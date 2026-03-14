@@ -72,8 +72,8 @@ private struct MapBuilder {
 	}
 
 	private mutating func shouldTerminateEarly(at depth: Int) -> Bool {
-		guard depth >= 2 else { return false }
-		let probability = 0.30
+		let probability = config.earlyTerminationChance(atDepth: depth)
+		guard probability > 0 else { return false }
 		let roll = Double.random(in: 0...1, using: &random)
 		return roll < probability
 	}

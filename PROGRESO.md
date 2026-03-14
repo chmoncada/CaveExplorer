@@ -99,6 +99,9 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
 - Se mejoró la claridad visual de home con tarjetas rápidas de progreso/preset y onboarding en pasos más legibles.
 - La pantalla de fin de partida ahora comunica mejor el resultado con estado destacado, barra de progreso y métricas resumidas.
 - Se añadieron tests de texto/estado del resumen para sostener este bloque de UX del hito `0.9`.
+- Se reequilibró la sensación de avance: el viaje se acelera ligeramente a mayor profundidad para reforzar tensión y ritmo.
+- El generador ahora reduce terminaciones letales demasiado tempranas y concentra más riesgo hacia el tramo tardío de la run.
+- Se añadieron tests de dominio/gameplay para tiempos de viaje por profundidad y probabilidad de terminación temprana escalada.
 
 ## Aprendizajes hasta ahora
 - Separar dominio (SPM) de la app (SwiftUI) facilitó probar la lógica sin depender de UI ni audio real.
@@ -120,4 +123,4 @@ Crear un juego de exploración de cuevas con avance automático, decisiones por 
    - `xcodebuild test -project CaveExplorer.xcodeproj -scheme CaveExplorer -destination 'platform=macOS'`
 
 ## Próximo bloque sugerido
-- Balancear jugabilidad para cerrar `0.9`: ajustar timers, profundidad y distribución de outcomes, y luego rematar con smoke tests/release checklist rumbo a `1.0`.
+- Entrar en tramo `1.0`: smoke tests del audio/controller ante cambios rápidos de estado y checklist final de release con validaciones manuales.

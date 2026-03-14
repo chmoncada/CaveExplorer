@@ -37,4 +37,18 @@ public struct CaveConfig: Equatable, Sendable {
 	public var happyEndingDepthRange: ClosedRange<Int> {
 		minimumHappyDepth...maxDepth
 	}
+
+	public func travelTime(forDepth depth: Int) -> TimeInterval {
+		let clampedDepth = min(max(0, depth), maxDepth)
+		let progress = maxDepth > 0 ? Double(clampedDepth) / Double(maxDepth) : 0
+		let multiplier = 1 - (0.35 * progress)
+		return max(1, decisionTime * multiplier)
+	}
+
+	public func earlyTerminationChance(atDepth depth: Int) -> Double {
+		guard depth >= 2 else { return 0 }
+		let depthProgress = maxDepth > 0 ? Double(depth) / Double(maxDepth) : 0
+		let baseline = depth < minimumHappyDepth ? 0.08 : 0.18
+		return min(0.45, baseline + (depthProgress * 0.20))
+	}
 }

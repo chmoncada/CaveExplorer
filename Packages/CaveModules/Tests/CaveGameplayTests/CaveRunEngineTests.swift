@@ -7,11 +7,12 @@ final class CaveRunEngineTests: XCTestCase {
 		let graph = makeSimpleChoiceGraph()
 		let config = CaveConfig(maxDepth: 5, decisionTime: 3, randomSeed: 1)
 		let engine = CaveRunEngine(graph: graph, config: config)
+		let expectedTravelTime = config.travelTime(forDepth: 1)
 
 		if case .traveling(let travel) = engine.state.phase {
 			XCTAssertEqual(travel.fromNodeID, 0)
 			XCTAssertEqual(travel.toNodeID, 1)
-			XCTAssertEqual(travel.remainingTime, 3, accuracy: 0.0001)
+			XCTAssertEqual(travel.remainingTime, expectedTravelTime, accuracy: 0.0001)
 		} else {
 			XCTFail("Expected traveling phase")
 		}
@@ -22,7 +23,7 @@ final class CaveRunEngineTests: XCTestCase {
 		let config = CaveConfig(maxDepth: 5, decisionTime: 3, randomSeed: 2)
 		var engine = CaveRunEngine(graph: graph, config: config)
 
-		engine.tick(deltaTime: 3)
+		engine.tick(deltaTime: config.travelTime(forDepth: 1))
 
 		if case .waitingForChoice(let decision) = engine.state.phase {
 			XCTAssertEqual(decision.nodeID, 1)
@@ -37,7 +38,7 @@ final class CaveRunEngineTests: XCTestCase {
 		let config = CaveConfig(maxDepth: 5, decisionTime: 3, randomSeed: 3)
 		var engine = CaveRunEngine(graph: graph, config: config)
 
-		engine.tick(deltaTime: 3)
+		engine.tick(deltaTime: config.travelTime(forDepth: 1))
 		engine.tick(deltaTime: 3)
 
 		if case .ended(let outcome) = engine.state.phase {
@@ -52,9 +53,9 @@ final class CaveRunEngineTests: XCTestCase {
 		let config = CaveConfig(maxDepth: 5, decisionTime: 3, randomSeed: 4)
 		var engine = CaveRunEngine(graph: graph, config: config)
 
-		engine.tick(deltaTime: 3)
+		engine.tick(deltaTime: config.travelTime(forDepth: 1))
 		XCTAssertTrue(engine.choose(optionIndex: 0))
-		engine.tick(deltaTime: 3)
+		engine.tick(deltaTime: config.travelTime(forDepth: 2))
 
 		if case .ended(let outcome) = engine.state.phase {
 			XCTAssertEqual(outcome, .escapeTreasurePortal)
@@ -68,7 +69,7 @@ final class CaveRunEngineTests: XCTestCase {
 		let config = CaveConfig(maxDepth: 5, decisionTime: 3, randomSeed: 5)
 		var engine = CaveRunEngine(graph: graph, config: config)
 
-		engine.tick(deltaTime: 3)
+		engine.tick(deltaTime: config.travelTime(forDepth: 1))
 		XCTAssertFalse(engine.choose(optionIndex: 7))
 
 		if case .waitingForChoice = engine.state.phase {
@@ -83,14 +84,30 @@ final class CaveRunEngineTests: XCTestCase {
 		let config = CaveConfig(maxDepth: 5, decisionTime: 2, randomSeed: 6)
 		var engine = CaveRunEngine(graph: graph, config: config)
 
-		engine.tick(deltaTime: 2)
-		engine.tick(deltaTime: 2)
+		engine.tick(deltaTime: config.travelTime(forDepth: 1))
+		engine.tick(deltaTime: config.travelTime(forDepth: 2))
 
 		if case .ended(let outcome) = engine.state.phase {
 			XCTAssertEqual(outcome, .lostInDarkness)
 		} else {
 			XCTFail("Expected ended phase")
 		}
+	}
+
+	func test_beginTravel_getsFasterAtDeeperDepths() {
+		let graph = makeSimpleChoiceGraph()
+		let config = CaveConfig(maxDepth: 6, decisionTime: 4, randomSeed: 7)
+		var engine = CaveRunEngine(graph: graph, config: config)
+
+		engine.tick(deltaTime: config.travelTime(forDepth: 1))
+		XCTAssertTrue(engine.choose(optionIndex: 0))
+
+		guard case .traveling(let travel) = engine.state.phase else {
+			return XCTFail("Expected traveling phase after choosing a path")
+		}
+
+		XCTAssertLessThan(travel.totalTime, config.decisionTime)
+		XCTAssertEqual(travel.totalTime, config.travelTime(forDepth: 2), accuracy: 0.0001)
 	}
 
 	private func makeSimpleChoiceGraph() -> CaveMapGraph {
