@@ -194,6 +194,36 @@ final class CaveExplorerTests: XCTestCase {
 		XCTAssertEqual(updated.first?.outcomeTitle, "Tesoro encontrado")
 	}
 
+	func test_runRecord_appending_usesDefaultStoredHistoryLimit() {
+		let records = Array(repeating: CaveRunRecord(summary: CaveRunSummary(outcome: .fatalFall, reachedDepth: 1, maxDepth: 10)), count: 20)
+		let updated = CaveRunRecord.appending(
+			summary: CaveRunSummary(outcome: .escapeTreasurePortal, reachedDepth: 10, maxDepth: 10),
+			to: records
+		)
+
+		XCTAssertEqual(updated.count, CaveRunRecord.storedHistoryLimit)
+		XCTAssertEqual(updated.first?.outcomeTitle, "Tesoro encontrado")
+	}
+
+	func test_runSummary_canBePersistedAsRecentRunFromSessionEnd() throws {
+		let defaults = try makeIsolatedDefaults()
+		let store = CavePreferencesStore.userDefaults(defaults)
+		let session = makeSession()
+
+		session.startNewGame(seed: 22)
+		session.tick(deltaTime: 1.1)
+		session.tick(deltaTime: 1.1)
+
+		let summary = try XCTUnwrap(session.runSummary)
+		let updatedHistory = CaveRunRecord.appending(summary: summary, to: store.load().recentRuns)
+		store.saveRecentRuns(updatedHistory)
+
+		let reloaded = store.load()
+		XCTAssertEqual(reloaded.recentRuns.count, 1)
+		XCTAssertEqual(reloaded.recentRuns.first?.seed, 22)
+		XCTAssertEqual(reloaded.recentRuns.first?.decisionsTaken, 0)
+	}
+
 	private func makeSession() -> CaveSession {
 		CaveSession(
 			config: CaveConfig(
@@ -202,5 +232,12 @@ final class CaveExplorerTests: XCTestCase {
 				happyEndingStartPercent: 0.8
 			)
 		)
+	}
+
+	private func makeIsolatedDefaults() throws -> UserDefaults {
+		let suiteName = "CaveExplorerTests.\(UUID().uuidString)"
+		let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+		defaults.removePersistentDomain(forName: suiteName)
+		return defaults
 	}
 }

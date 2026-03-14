@@ -89,6 +89,19 @@ final class CavePreferencesStoreTests: XCTestCase {
 		XCTAssertTrue(snapshot.hasSeenOnboarding)
 	}
 
+	func test_saveRecentRuns_capsStoredHistoryToConfiguredLimit() throws {
+		let defaults = try makeIsolatedDefaults()
+		let store = CavePreferencesStore.userDefaults(defaults)
+		let oversized = (0..<20).map { index in
+			CaveRunRecord(summary: CaveRunSummary(outcome: .monsterAttack, reachedDepth: index, maxDepth: 20))
+		}
+
+		store.saveRecentRuns(oversized)
+
+		let snapshot = store.load()
+		XCTAssertEqual(snapshot.recentRuns.count, CaveRunRecord.storedHistoryLimit)
+	}
+
 	private func makeIsolatedDefaults() throws -> UserDefaults {
 		let suiteName = "CavePreferencesStoreTests.\(UUID().uuidString)"
 		let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))

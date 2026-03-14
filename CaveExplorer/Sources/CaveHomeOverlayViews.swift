@@ -94,7 +94,7 @@ struct RecentRunsPanelView: View {
 				.font(.headline)
 				.foregroundStyle(.white)
 
-			ForEach(recentRuns.prefix(3)) { run in
+			ForEach(recentRuns.prefix(CaveRunRecord.homeVisibleLimit)) { run in
 				VStack(alignment: .leading, spacing: 2) {
 					Text("\(run.outcomeTitle) - \(run.progressPercent)%")
 						.font(.subheadline)

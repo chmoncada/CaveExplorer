@@ -119,11 +119,11 @@ struct CavePreferencesStore {
 	private static func loadRecentRuns(from defaults: UserDefaults) -> [CaveRunRecord] {
 		guard let data = defaults.data(forKey: Keys.recentRunsData) else { return [] }
 		guard let runs = try? JSONDecoder().decode([CaveRunRecord].self, from: data) else { return [] }
-		return Array(runs.prefix(5))
+		return Array(runs.prefix(CaveRunRecord.storedHistoryLimit))
 	}
 
 	private static func saveRecentRuns(_ recentRuns: [CaveRunRecord], into defaults: UserDefaults) {
-		let cappedRuns = Array(recentRuns.prefix(5))
+		let cappedRuns = Array(recentRuns.prefix(CaveRunRecord.storedHistoryLimit))
 		guard let encoded = try? JSONEncoder().encode(cappedRuns) else { return }
 		defaults.set(encoded, forKey: Keys.recentRunsData)
 	}

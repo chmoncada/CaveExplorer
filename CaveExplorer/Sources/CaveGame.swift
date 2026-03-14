@@ -274,6 +274,9 @@ struct CaveRunStats: Equatable {
 }
 
 struct CaveRunRecord: Codable, Equatable, Identifiable {
+	static let storedHistoryLimit = 5
+	static let homeVisibleLimit = 3
+
 	let id: UUID
 	let endedAt: Date
 	let outcomeTitle: String
@@ -310,7 +313,11 @@ struct CaveRunRecord: Codable, Equatable, Identifiable {
 		return "Seed aleatoria"
 	}
 
-	static func appending(summary: CaveRunSummary, to records: [CaveRunRecord], limit: Int = 5) -> [CaveRunRecord] {
+	static func appending(
+		summary: CaveRunSummary,
+		to records: [CaveRunRecord],
+		limit: Int = CaveRunRecord.storedHistoryLimit
+	) -> [CaveRunRecord] {
 		let next = CaveRunRecord(summary: summary)
 		return Array(([next] + records).prefix(max(1, limit)))
 	}
